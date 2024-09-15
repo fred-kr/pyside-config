@@ -1,0 +1,52 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.autoSave": "afterDelay",
+		"python.analysis.typeCheckingMode": "strict",
+		"python.analysis.diagnosticSeverityOverrides": {
+			"reportMissingTypeStubs": "none",
+			"reportUnknownMemberType": "none",
+			"reportUnknownLambdaType": "none"
+		},
+		"python.analysis.exclude": [
+			"**/__pycache__",
+			".git",
+			".venv",
+			"**/tests/**",
+			".mypy_cache/**",
+			".pytest_cache/**",
+			".ruff_cache/**",
+			"**/dist/**",
+			"**/build/**",
+			"**/output/**",
+			"**/.idea/**",
+		],
+		"ruff.format.args": [
+			"--config=${workspaceFolder}/pyproject.toml"
+		],
+		"ruff.lint.args": [
+			"--config=${workspaceFolder}/pyproject.toml"
+		],
+		"workbench.colorCustomizations": {
+			"activityBar.activeBackground": "#a0a6b5",
+			"activityBar.background": "#a0a6b5",
+			"activityBar.foreground": "#15202b",
+			"activityBar.inactiveForeground": "#15202b99",
+			"activityBarBadge.background": "#f7e7ec",
+			"activityBarBadge.foreground": "#15202b",
+			"commandCenter.border": "#15202b99",
+			"editorGroup.border": "#a0a6b5",
+			"sash.hoverBorder": "#a0a6b5",
+			"tab.activeBorder": "#a0a6b5",
+			"titleBar.activeBackground": "#838b9f",
+			"titleBar.activeForeground": "#15202b",
+			"titleBar.inactiveBackground": "#838b9f99",
+			"titleBar.inactiveForeground": "#15202b99"
+		},
+		"peacock.color": "#838b9f"
+	}
+}
