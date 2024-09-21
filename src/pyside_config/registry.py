@@ -1,7 +1,7 @@
 import typing as t
 
 from .base import ConfigBase
-import attrs
+
 
 class ConfigRegistry:
     def __init__(self) -> None:
@@ -33,11 +33,3 @@ class ConfigRegistry:
 
 config_registry = ConfigRegistry()
 del ConfigRegistry
-
-def new_config(name: str, attributes: dict[str, t.Any], bases: tuple[type, ...] = (type(object),)) -> t.Type[ConfigBase]:
-    config_class = attrs.make_class(name, attributes, bases=bases)
-
-    config_registry.register_config(name, config_class)
-
-    return config_class
-
