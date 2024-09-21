@@ -35,6 +35,8 @@ class WidgetPropertiesBase[W]:
 class EditorWidgetInfo[W](t.TypedDict):
     label: str
     widget_factory: t.Callable[..., W]
+    change_signal_name: str
+    set_value_name: str
     widget_properties: t.NotRequired[WidgetPropertiesBase[W] | None]
 
 

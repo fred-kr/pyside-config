@@ -13,7 +13,7 @@ class ConfigBase:
         return attrs.asdict(self)
 
     @classmethod
-    def from_qsettings(cls) -> "ConfigBase":
+    def from_qsettings(cls) -> t.Self:
         settings = QtCore.QSettings()
         init_values = {}
         for field in attrs.fields(cls):
