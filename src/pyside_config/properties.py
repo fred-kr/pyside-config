@@ -71,5 +71,4 @@ class LineEditProperties(WidgetPropertiesBase[QtWidgets.QLineEdit]):
 @attrs.define
 class ComboBoxProperties(WidgetPropertiesBase[QtWidgets.QComboBox]):
     isEditable: bool = attrs.field(default=False, converter=bool, metadata={SETTER_METADATA_KEY: "setEditable"})
-    completer: QtWidgets.QCompleter | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setCompleter"})
     hasFrame: bool = attrs.field(default=False, converter=bool, metadata={SETTER_METADATA_KEY: "setFrame"})

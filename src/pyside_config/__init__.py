@@ -19,21 +19,3 @@ class EditorWidgetInfo[W: QtWidgets.QWidget]:
 
 
 config = functools.partial(attrs.define, on_setattr=update_qsettings)
-
-
-class ConfigManager:
-
-    _instance: "ConfigManager | None" = None
-
-    config_registry: dict[str, t.Type[ConfigBase]] = {}
-
-    def __new__(cls) -> "ConfigManager":
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-
-        return cls._instance
-
-    @classmethod
-    def register_config(cls, config_class: t.Type[ConfigBase]) -> t.Type[ConfigBase]:
-        cls.config_registry[config_class.__name__] = config_class
-        return config_class
