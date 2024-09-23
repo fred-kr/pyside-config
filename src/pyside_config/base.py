@@ -22,7 +22,7 @@ def update_qsettings[T](inst: attrs.AttrsInstance, attr: t.Any, value: T) -> T:
     return value
 
 
-@attrs.define(on_setattr=update_qsettings)
+@attrs.define
 class ConfigBase:
     @classmethod
     def from_qsettings(cls) -> t.Self:
