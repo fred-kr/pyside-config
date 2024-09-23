@@ -37,7 +37,7 @@ class SpinBoxProperties(WidgetPropertiesBase[QtWidgets.QSpinBox]):
     )
     prefix: str | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setPrefix"})
     suffix: str | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setSuffix"})
-    frame: bool = attrs.field(default=False, converter=bool, metadata={SETTER_METADATA_KEY: "setFrame"})
+    hasFrame: bool = attrs.field(default=False, converter=bool, metadata={SETTER_METADATA_KEY: "setFrame"})
 
 
 @attrs.define
@@ -56,12 +56,20 @@ class DoubleSpinBoxProperties(WidgetPropertiesBase[QtWidgets.QDoubleSpinBox]):
     )
     prefix: str | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setPrefix"})
     suffix: str | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setSuffix"})
+    hasFrame: bool = attrs.field(default=False, converter=bool, metadata={SETTER_METADATA_KEY: "setFrame"})
 
 
 @attrs.define
 class LineEditProperties(WidgetPropertiesBase[QtWidgets.QLineEdit]):
-    frame: bool = attrs.field(default=False, converter=bool, metadata={SETTER_METADATA_KEY: "setFrame"})
     clearButtonEnabled: bool = attrs.field(
         default=True, converter=bool, metadata={SETTER_METADATA_KEY: "setClearButtonEnabled"}
     )
     completer: QtWidgets.QCompleter | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setCompleter"})
+    hasFrame: bool = attrs.field(default=False, converter=bool, metadata={SETTER_METADATA_KEY: "setFrame"})
+
+
+@attrs.define
+class ComboBoxProperties(WidgetPropertiesBase[QtWidgets.QComboBox]):
+    isEditable: bool = attrs.field(default=False, converter=bool, metadata={SETTER_METADATA_KEY: "setEditable"})
+    completer: QtWidgets.QCompleter | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setCompleter"})
+    hasFrame: bool = attrs.field(default=False, converter=bool, metadata={SETTER_METADATA_KEY: "setFrame"})
