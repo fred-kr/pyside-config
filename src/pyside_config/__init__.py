@@ -1,10 +1,17 @@
 import typing as t
 
-from .base import ConfigBase
-from .registry import config_registry
+import attrs
+from PySide6 import QtWidgets
 
-__all__ = ["config_registry", "register_config"]
+from .base import ConfigBase, WidgetPropertiesBase
+
+__all__ = ["ConfigBase", "WidgetPropertiesBase", "EditorWidgetInfo"]
 
 
-def register_config(name: str, config_class: t.Type[ConfigBase]) -> None:
-    config_registry.register_config(name, config_class)
+@attrs.define
+class EditorWidgetInfo[W: QtWidgets.QWidget]:
+    label: str
+    widget_factory: t.Callable[..., W]
+    sig_value_changed: str
+    set_value_method: str
+    widget_properties: WidgetPropertiesBase[W] | None = None

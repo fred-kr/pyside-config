@@ -3,6 +3,8 @@ import typing as t
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
+__all__ = ["EnumComboBox"]
+
 ItemDataRole = QtCore.Qt.ItemDataRole
 
 

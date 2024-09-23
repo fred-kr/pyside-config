@@ -3,7 +3,9 @@ import typing as t
 import attrs
 from PySide6 import QtWidgets
 
-W = t.TypeVar("W", bound=QtWidgets.QWidget)
+from .base import SETTER_METADATA_KEY, WidgetPropertiesBase
+
+__all__ = ["SpinBoxProperties", "DoubleSpinBoxProperties", "LineEditProperties"]
 
 
 def _check_step_size(inst: "SpinBoxProperties | DoubleSpinBoxProperties", attr: t.Any, value: int | float) -> None:
@@ -23,57 +25,43 @@ def _check_lower_bound(inst: "SpinBoxProperties | DoubleSpinBoxProperties", attr
 
 
 @attrs.define
-class WidgetPropertiesBase[W]:
-    def apply_to_widget(self, widget: W) -> None:
-        for field in attrs.fields(self.__class__):
-            setter_name = field.metadata["setter"]
-            prop_value = getattr(self, field.name)
-            if setter_name and hasattr(widget, setter_name):
-                getattr(widget, setter_name)(prop_value)
-
-
-class EditorWidgetInfo[W](t.TypedDict):
-    label: str
-    widget_factory: t.Callable[..., W]
-    change_signal_name: str
-    set_value_name: str
-    widget_properties: t.NotRequired[WidgetPropertiesBase[W] | None]
-
-
-@attrs.define
 class SpinBoxProperties(WidgetPropertiesBase[QtWidgets.QSpinBox]):
     minimum: int = attrs.field(
-        default=0, converter=int, validator=_check_lower_bound, metadata={"setter": "setMinimum"}
+        default=0, converter=int, validator=_check_lower_bound, metadata={SETTER_METADATA_KEY: "setMinimum"}
     )
     maximum: int = attrs.field(
-        default=1_000_000, converter=int, validator=_check_upper_bound, metadata={"setter": "setMaximum"}
+        default=1_000_000, converter=int, validator=_check_upper_bound, metadata={SETTER_METADATA_KEY: "setMaximum"}
     )
     singleStep: int = attrs.field(
-        default=1, converter=int, validator=_check_step_size, metadata={"setter": "setSingleStep"}
+        default=1, converter=int, validator=_check_step_size, metadata={SETTER_METADATA_KEY: "setSingleStep"}
     )
-    prefix: str = attrs.field(default="", converter=str, metadata={"setter": "setPrefix"})
-    suffix: str = attrs.field(default="", converter=str, metadata={"setter": "setSuffix"})
-    frame: bool = attrs.field(default=False, converter=bool, metadata={"setter": "setFrame"})
+    prefix: str | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setPrefix"})
+    suffix: str | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setSuffix"})
+    frame: bool = attrs.field(default=False, converter=bool, metadata={SETTER_METADATA_KEY: "setFrame"})
 
 
 @attrs.define
 class DoubleSpinBoxProperties(WidgetPropertiesBase[QtWidgets.QDoubleSpinBox]):
     minimum: float = attrs.field(
-        default=0.0, converter=float, validator=_check_lower_bound, metadata={"setter": "setMinimum"}
+        default=0.0, converter=float, validator=_check_lower_bound, metadata={SETTER_METADATA_KEY: "setMinimum"}
     )
     maximum: float = attrs.field(
-        default=1e6, converter=float, validator=_check_upper_bound, metadata={"setter": "setMaximum"}
+        default=1e6, converter=float, validator=_check_upper_bound, metadata={SETTER_METADATA_KEY: "setMaximum"}
     )
     singleStep: float = attrs.field(
-        default=0.1, converter=float, validator=_check_step_size, metadata={"setter": "setSingleStep"}
+        default=0.1, converter=float, validator=_check_step_size, metadata={SETTER_METADATA_KEY: "setSingleStep"}
     )
     decimals: int = attrs.field(
-        default=2, converter=int, validator=attrs.validators.ge(0), metadata={"setter": "setDecimals"}
+        default=2, converter=int, validator=attrs.validators.ge(0), metadata={SETTER_METADATA_KEY: "setDecimals"}
     )
-    prefix: str = attrs.field(default="", converter=str, metadata={"setter": "setPrefix"})
-    suffix: str = attrs.field(default="", converter=str, metadata={"setter": "setSuffix"})
+    prefix: str | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setPrefix"})
+    suffix: str | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setSuffix"})
 
 
 @attrs.define
 class LineEditProperties(WidgetPropertiesBase[QtWidgets.QLineEdit]):
-    frame: bool = attrs.field(default=False, converter=bool, metadata={"setter": "setFrame"})
+    frame: bool = attrs.field(default=False, converter=bool, metadata={SETTER_METADATA_KEY: "setFrame"})
+    clearButtonEnabled: bool = attrs.field(
+        default=True, converter=bool, metadata={SETTER_METADATA_KEY: "setClearButtonEnabled"}
+    )
+    completer: QtWidgets.QCompleter | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setCompleter"})
