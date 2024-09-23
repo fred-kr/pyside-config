@@ -3,7 +3,7 @@ import typing as t
 
 import attrs
 from attr._make import Factory
-from PySide6 import QtCore, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 
 SETTER_METADATA_KEY = "__setter"
 
@@ -17,7 +17,10 @@ def update_qsettings[T](inst: attrs.AttrsInstance, attr: t.Any, value: T) -> T:
     path = get_setting_path(inst, attr)
     settings = QtCore.QSettings()
     if path:
-        settings.setValue(path, value)
+        if isinstance(value, QtGui.QColor):
+            settings.setValue(path, value.name())
+        else:
+            settings.setValue(path, value)
         settings.sync()
     return value
 
