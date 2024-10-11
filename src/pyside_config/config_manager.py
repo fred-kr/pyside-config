@@ -1,4 +1,3 @@
-import functools
 import typing as t
 
 import attrs
@@ -11,33 +10,34 @@ if t.TYPE_CHECKING:
 
 __all__ = ["ConfigManager"]
 
-
-def singleton[T](cls: t.Type[T]) -> t.Callable[..., T]:
-    """
-    A decorator that ensures a class is a singleton, meaning only one instance of the class exists.
-
-    Args:
-        cls (Type[T]): The class to be made a singleton.
-
-    Returns:
-        Callable[..., T]: A callable that returns the singleton instance of the class.
-    """
-    instances: dict[t.Type[T], T] = {}
-
-    @functools.wraps(cls)
-    def wrapper(*args: t.Any, **kwargs: t.Any) -> T:
-        if cls not in instances:
-            instances[cls] = cls(*args, **kwargs)
-        return instances[cls]
-
-    return wrapper
+T = t.TypeVar("T", bound="SingletonMeta")
 
 
-@singleton
-class ConfigManager:
-    __slots__ = ()
+class SingletonMeta(type):
+    _instances = {}
 
-    _registry: dict[str, "ConfigBase"] = {}
+    def __call__(cls: t.Type[T], *args: t.Any, **kwargs: t.Any) -> T:
+        if cls not in cls._instances:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+            instance._initialized = False  # Flag to check if __init__ has been called
+        else:
+            instance = cls._instances[cls]
+        if not getattr(instance, "_initialized", False):
+            instance.__init__(*args, **kwargs)
+            instance._initialized = True
+        return instance
+
+
+class ConfigManager(metaclass=SingletonMeta):
+    __slots__ = ("_registry",)
+
+    def __init__(self) -> None:
+        self._registry: dict[str, "ConfigBase"] = {}
+
+    @property
+    def registry(self) -> dict[str, "ConfigBase"]:
+        return self._registry
 
     @classmethod
     def register(cls, config_class: t.Type["ConfigBase"], name: str | None = None) -> None:

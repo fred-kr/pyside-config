@@ -15,8 +15,6 @@ if t.TYPE_CHECKING:
 SETTER_METADATA_KEY = "__setter"
 NOTHING_TYPE = t.Literal[NOTHING]
 
-registry = ConfigManager()
-
 
 def get_setting_path(inst_or_cls: attrs.AttrsInstance | t.Type[attrs.AttrsInstance], attr: t.Any) -> str:
     """
@@ -65,7 +63,7 @@ def update_qsettings[T](inst: attrs.AttrsInstance, attr: t.Any, value: T) -> T:
 class ConfigBase:
     @classmethod
     def __attrs_init_subclass__(cls) -> None:
-        registry.register(cls)
+        ConfigManager.register(cls)
 
     @classmethod
     def from_qsettings(cls) -> t.Self:
