@@ -101,7 +101,9 @@ class ConfigBase:
 
         self.to_qsettings()
 
-    def create_editor(self, **kwargs: t.Any) -> QtWidgets.QWidget:
+    def create_editor(
+        self, *, style: t.Literal["fusion", "windows11", "windows"] | None = None, **kwargs: t.Any
+    ) -> QtWidgets.QWidget:
         """
         Creates a dynamic editor interface for the class, populating it with widgets based on defined fields.
 
@@ -110,12 +112,18 @@ class ConfigBase:
         class attributes.
 
         Args:
+            style (Literal["fusion", "windows11", "windows"] | None, optional): Style to use for the editor widget. If
+                None, the default style of the application will be used.
             **kwargs: Additional keyword arguments passed to the widget factory.
 
         Returns:
             QtWidgets.QWidget: A QWidget containing the dynamically created editor interface.
         """
         container_widget = QtWidgets.QWidget()
+
+        if style is not None:
+            container_style = QtWidgets.QStyleFactory.create(style)
+            container_widget.setStyle(container_style)
 
         layout = QtWidgets.QFormLayout(container_widget)
 
