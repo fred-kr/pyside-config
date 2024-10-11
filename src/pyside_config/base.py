@@ -149,26 +149,20 @@ class WidgetPropertiesBase[W: QtWidgets.QWidget]:
     Base class for widget properties.
     """
 
-    styleSheet: str | None | NOTHING_TYPE = attrs.field(
-        default=NOTHING, metadata={SETTER_METADATA_KEY: "setStyleSheet"}
-    )
+    styleSheet: str | None = attrs.field(default="", metadata={SETTER_METADATA_KEY: "setStyleSheet"})
 
     def apply_to_widget(self, widget: W) -> None:
         """
         Applies the current values of the class attributes to the specified widget.
 
         This method iterates through the fields of the class and sets the corresponding properties on the provided
-        widget, using defined setter methods. If an attribute's value is not set (indicated by a special constant), it
-        is skipped.
+        widget, using defined setter methods.
 
         Args:
             widget (W): The widget to which the attribute values will be applied.
-
-        Returns:
-            None
         """
         for field in attrs.fields(self.__class__):
             property_value = getattr(self, field.name)
-            if property_value is NOTHING:
+            if field.name == "styleSheet" and property_value == "":  # allow using None to clear a style sheet
                 continue
             getattr(widget, field.metadata[SETTER_METADATA_KEY])(property_value)
