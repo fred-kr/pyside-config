@@ -5,9 +5,13 @@ import attrs
 from attr._make import Factory
 from attrs import NOTHING
 from PySide6 import QtCore, QtGui, QtWidgets
+from pyside_widgets import SettingCard
 
 from .registry import ConfigRegistry
 
+if t.TYPE_CHECKING:
+    from . import EditorWidgetInfo
+    
 SETTER_METADATA_KEY = "__setter"
 NOTHING_TYPE = t.Literal[NOTHING]
 
@@ -125,28 +129,37 @@ class ConfigBase:
             container_style = QtWidgets.QStyleFactory.create(style)
             container_widget.setStyle(container_style)
 
-        layout = QtWidgets.QFormLayout(container_widget)
+        # layout = QtWidgets.QFormLayout(container_widget)
+        layout = QtWidgets.QVBoxLayout(container_widget)
 
         for field in attrs.fields(self.__class__):
-            editor_info = field.metadata.get("editor", None)
+            editor_info: "EditorWidgetInfo[QtWidgets.QWidget] | None" = field.metadata.get("editor", None)
             if not editor_info:
                 continue
 
-            widget = editor_info.widget_factory(**kwargs)
-            widget_properties = editor_info.widget_properties
+            editor_widget = editor_info.widget_factory(**kwargs)
+            editor_widget_properties = editor_info.widget_properties
 
             value = getattr(self, field.name)
 
             # Set the initial value of the editor
-            getattr(widget, editor_info.set_value_method)(value)
+            getattr(editor_widget, editor_info.set_value_method)(value)
 
             # Update the config value whenever the editor's valueChanged (varies depending on the widget type) signal is emitted
-            getattr(widget, editor_info.sig_value_changed).connect(lambda val, f=field: setattr(self, f.name, val))
+            getattr(editor_widget, editor_info.sig_value_changed).connect(
+                lambda val, f=field: setattr(self, f.name, val)
+            )
 
-            if widget_properties is not None:
-                widget_properties.apply_to_widget(widget)
+            if editor_widget_properties is not None:
+                editor_widget_properties.apply_to_widget(editor_widget)
 
-            layout.addRow(editor_info.label, widget)
+            description = field.metadata.get("description", None)
+            icon = editor_info.icon
+            
+            card = SettingCard(title=editor_info.label, text=description, icon=icon)
+            card.set_editor_widget(editor_widget)
+
+            layout.addWidget(card)
 
         return container_widget
 

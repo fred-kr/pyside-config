@@ -2,7 +2,7 @@ import functools
 import typing as t
 
 import attrs
-from PySide6 import QtWidgets
+from PySide6 import QtGui, QtWidgets
 
 from .base import ConfigBase, WidgetPropertiesBase, update_qsettings
 from .registry import ConfigRegistry
@@ -16,6 +16,7 @@ class EditorWidgetInfo[W: QtWidgets.QWidget]:
     widget_factory: t.Callable[..., W]
     sig_value_changed: str
     set_value_method: str
+    icon: QtGui.QIcon | None = None
     widget_properties: WidgetPropertiesBase[W] | None = None
 
 
