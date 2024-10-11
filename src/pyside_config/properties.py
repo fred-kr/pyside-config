@@ -5,7 +5,7 @@ from PySide6 import QtWidgets
 
 from .base import SETTER_METADATA_KEY, WidgetPropertiesBase
 
-__all__ = ["SpinBoxProperties", "DoubleSpinBoxProperties", "LineEditProperties"]
+__all__ = ["SpinBoxProperties", "DoubleSpinBoxProperties", "LineEditProperties", "ComboBoxProperties"]
 
 
 def _check_step_size(inst: "SpinBoxProperties | DoubleSpinBoxProperties", attr: t.Any, value: int | float) -> None:
@@ -37,7 +37,9 @@ class SpinBoxProperties(WidgetPropertiesBase[QtWidgets.QSpinBox]):
     )
     prefix: str | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setPrefix"})
     suffix: str | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setSuffix"})
-    hasFrame: bool = attrs.field(default=False, converter=bool, metadata={SETTER_METADATA_KEY: "setFrame"})
+    hasFrame: bool = attrs.field(
+        default=False, converter=attrs.converters.to_bool, metadata={SETTER_METADATA_KEY: "setFrame"}
+    )
 
 
 @attrs.define
@@ -56,7 +58,9 @@ class DoubleSpinBoxProperties(WidgetPropertiesBase[QtWidgets.QDoubleSpinBox]):
     )
     prefix: str | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setPrefix"})
     suffix: str | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setSuffix"})
-    hasFrame: bool = attrs.field(default=False, converter=bool, metadata={SETTER_METADATA_KEY: "setFrame"})
+    hasFrame: bool = attrs.field(
+        default=False, converter=attrs.converters.to_bool, metadata={SETTER_METADATA_KEY: "setFrame"}
+    )
 
 
 @attrs.define
@@ -65,10 +69,16 @@ class LineEditProperties(WidgetPropertiesBase[QtWidgets.QLineEdit]):
         default=True, converter=bool, metadata={SETTER_METADATA_KEY: "setClearButtonEnabled"}
     )
     completer: QtWidgets.QCompleter | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setCompleter"})
-    hasFrame: bool = attrs.field(default=False, converter=bool, metadata={SETTER_METADATA_KEY: "setFrame"})
+    hasFrame: bool = attrs.field(
+        default=False, converter=attrs.converters.to_bool, metadata={SETTER_METADATA_KEY: "setFrame"}
+    )
 
 
 @attrs.define
 class ComboBoxProperties(WidgetPropertiesBase[QtWidgets.QComboBox]):
-    isEditable: bool = attrs.field(default=False, converter=bool, metadata={SETTER_METADATA_KEY: "setEditable"})
-    hasFrame: bool = attrs.field(default=False, converter=bool, metadata={SETTER_METADATA_KEY: "setFrame"})
+    isEditable: bool = attrs.field(
+        default=False, converter=attrs.converters.to_bool, metadata={SETTER_METADATA_KEY: "setEditable"}
+    )
+    hasFrame: bool = attrs.field(
+        default=False, converter=attrs.converters.to_bool, metadata={SETTER_METADATA_KEY: "setFrame"}
+    )

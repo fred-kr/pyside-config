@@ -5,8 +5,9 @@ import attrs
 from PySide6 import QtWidgets
 
 from .base import ConfigBase, WidgetPropertiesBase, update_qsettings
+from .registry import ConfigRegistry
 
-__all__ = ["ConfigBase", "WidgetPropertiesBase", "EditorWidgetInfo", "config"]
+__all__ = ["ConfigBase", "WidgetPropertiesBase", "EditorWidgetInfo", "config", "ConfigRegistry"]
 
 
 @attrs.define

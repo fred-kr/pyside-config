@@ -5,8 +5,10 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "pyside6>=6.7.2",
+    "pyside6>=6.7.3",
     "attrs>=24.2.0",
+    "pyside-widgets",
+    "loguru>=0.7.2",
 ]
 
 [build-system]
@@ -40,6 +42,10 @@ typeCheckingMode = "strict"
 
 [tool.uv]
 dev-dependencies = [
-    "rich>=13.8.1",
-    "ipython>=8.27.0",
+    "rich>=13.9.2",
+    "ipython>=8.28.0",
+    "ruff>=0.6.9",
 ]
+
+[tool.uv.sources]
+pyside-widgets = { git = "https://github.com/fred-kr/pyside-widgets.git" }
