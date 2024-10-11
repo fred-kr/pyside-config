@@ -455,7 +455,7 @@ dev = [
 [[package]]
 name = "pyside-widgets"
 version = "0.1.0"
-source = { git = "https://github.com/fred-kr/pyside-widgets.git#3e5b801a5e77634cace2569403dd18480e396611" }
+source = { git = "https://github.com/fred-kr/pyside-widgets.git#9cdbddd063aa19f706e2b180f4591da69ab1d28b" }
 dependencies = [
     { name = "darkdetect" },
     { name = "numpy" },

@@ -11,7 +11,7 @@ from .registry import ConfigRegistry
 
 if t.TYPE_CHECKING:
     from . import EditorWidgetInfo
-    
+
 SETTER_METADATA_KEY = "__setter"
 NOTHING_TYPE = t.Literal[NOTHING]
 
@@ -111,10 +111,6 @@ class ConfigBase:
         """
         Creates a dynamic editor interface for the class, populating it with widgets based on defined fields.
 
-        This method constructs a QWidget containing a form layout, where each field in the class is represented by a
-        corresponding editor widget. The initial values are set, and changes to the widget values are reflected in the
-        class attributes.
-
         Args:
             style (Literal["fusion", "windows11", "windows"] | None, optional): Style to use for the editor widget. If
                 None, the default style of the application will be used.
@@ -129,8 +125,8 @@ class ConfigBase:
             container_style = QtWidgets.QStyleFactory.create(style)
             container_widget.setStyle(container_style)
 
-        # layout = QtWidgets.QFormLayout(container_widget)
         layout = QtWidgets.QVBoxLayout(container_widget)
+        layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
 
         for field in attrs.fields(self.__class__):
             editor_info: "EditorWidgetInfo[QtWidgets.QWidget] | None" = field.metadata.get("editor", None)
@@ -155,9 +151,8 @@ class ConfigBase:
 
             description = field.metadata.get("description", None)
             icon = editor_info.icon
-            
-            card = SettingCard(title=editor_info.label, text=description, icon=icon)
-            card.set_editor_widget(editor_widget)
+
+            card = SettingCard(title=editor_info.label, editor_widget=editor_widget, description=description, icon=icon)
 
             layout.addWidget(card)
 
