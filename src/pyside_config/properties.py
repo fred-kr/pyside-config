@@ -3,7 +3,7 @@ import typing as t
 import attrs
 from PySide6 import QtWidgets
 
-from .base import SETTER_METADATA_KEY, WidgetPropertiesBase
+from ._base import SETTER_METADATA_KEY, WidgetPropertiesBase
 
 __all__ = ["SpinBoxProperties", "DoubleSpinBoxProperties", "LineEditProperties", "ComboBoxProperties"]
 

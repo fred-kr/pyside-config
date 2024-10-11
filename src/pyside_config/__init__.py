@@ -4,10 +4,10 @@ import typing as t
 import attrs
 from PySide6 import QtGui, QtWidgets
 
-from .base import ConfigBase, WidgetPropertiesBase, update_qsettings
-from .registry import ConfigRegistry
+from ._base import ConfigBase, WidgetPropertiesBase, update_qsettings
+from .config_manager import ConfigManager
 
-__all__ = ["ConfigBase", "WidgetPropertiesBase", "EditorWidgetInfo", "config", "ConfigRegistry"]
+__all__ = ["ConfigBase", "WidgetPropertiesBase", "EditorWidgetInfo", "config", "ConfigManager"]
 
 
 @attrs.define

@@ -7,7 +7,7 @@ from attrs import NOTHING
 from PySide6 import QtCore, QtGui, QtWidgets
 from pyside_widgets import SettingCard
 
-from .registry import ConfigRegistry
+from .config_manager import ConfigManager
 
 if t.TYPE_CHECKING:
     from . import EditorWidgetInfo
@@ -15,7 +15,7 @@ if t.TYPE_CHECKING:
 SETTER_METADATA_KEY = "__setter"
 NOTHING_TYPE = t.Literal[NOTHING]
 
-registry = ConfigRegistry()
+registry = ConfigManager()
 
 
 def get_setting_path(inst_or_cls: attrs.AttrsInstance | t.Type[attrs.AttrsInstance], attr: t.Any) -> str:
@@ -79,7 +79,7 @@ class ConfigBase:
             path = get_setting_path(cls, field)
             value = settings.value(path, field.default)
             if isinstance(value, Factory):
-                value = value.factory()
+                value = value.factory()  # type: ignore
             init_values[field.name] = value
 
         return cls(**init_values)
@@ -150,9 +150,10 @@ class ConfigBase:
                 editor_widget_properties.apply_to_widget(editor_widget)
 
             description = field.metadata.get("description", None)
-            icon = editor_info.icon
 
-            card = SettingCard(title=editor_info.label, editor_widget=editor_widget, description=description, icon=icon)
+            card = SettingCard(
+                title=editor_info.label, editor_widget=editor_widget, description=description, icon=editor_info.icon
+            )
 
             layout.addWidget(card)
 
