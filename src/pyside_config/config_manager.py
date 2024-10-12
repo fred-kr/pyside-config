@@ -1,217 +1,200 @@
-import typing as t
+# import typing as t
 
-import attrs
-from loguru import logger
-from PySide6 import QtCore, QtWidgets
+# import attrs
+# from loguru import logger
+# from PySide6 import QtCore, QtWidgets
 
-if t.TYPE_CHECKING:
-    from ._base import ConfigBase
-
-
-__all__ = ["ConfigManager"]
-
-T = t.TypeVar("T", bound="SingletonMeta")
+# if t.TYPE_CHECKING:
+#     from ._base import ConfigBase
 
 
-class SingletonMeta(type):
-    _instances = {}
-
-    def __call__(cls: t.Type[T], *args: t.Any, **kwargs: t.Any) -> T:
-        if cls not in cls._instances:
-            instance = super().__call__(*args, **kwargs)
-            cls._instances[cls] = instance
-            instance._initialized = False  # Flag to check if __init__ has been called
-        else:
-            instance = cls._instances[cls]
-        if not getattr(instance, "_initialized", False):
-            instance.__init__(*args, **kwargs)
-            instance._initialized = True
-        return instance
+# __all__ = ["ConfigManager"]
 
 
-class ConfigManager(metaclass=SingletonMeta):
-    __slots__ = ("_registry",)
 
-    def __init__(self) -> None:
-        self._registry: dict[str, "ConfigBase"] = {}
+# class ConfigManager(metaclass=SingletonMeta):
+#     __slots__ = ("_registry",)
 
-    @property
-    def registry(self) -> dict[str, "ConfigBase"]:
-        return self._registry
+#     def __init__(self) -> None:
+#         self._registry: dict[str, "ConfigBase"] = {}
 
-    @classmethod
-    def register(cls, config_class: t.Type["ConfigBase"], name: str | None = None) -> None:
-        """
-        Registers a configuration class with the ConfigManager.
+#     @property
+#     def registry(self) -> dict[str, "ConfigBase"]:
+#         return self._registry
 
-        This method creates an instance of the config class, saves its default values to QSettings, and registers it
-        under the specified name or the class name if no name is provided.
+#     @classmethod
+#     def register(cls, config_class: t.Type["ConfigBase"], name: str | None = None) -> None:
+#         """
+#         Registers a configuration class with the ConfigManager.
 
-        Args:
-            config_class (Type[ConfigBase]): The configuration class to register.
-            name (str | None, optional): The name under which the config class is registered. If None, the class name
-            will be used.
-        """
-        inst = config_class.from_qsettings()
-        inst.to_qsettings()  # create default values if they don't yet exist in QSettings
-        if name:
-            cls._registry[name] = inst
-        else:
-            cls._registry[config_class.__name__] = inst
+#         This method creates an instance of the config class, saves its default values to QSettings, and registers it
+#         under the specified name or the class name if no name is provided.
 
-    @classmethod
-    def save(cls) -> None:
-        """
-        Saves the current values of all registered configuration classes to QSettings.
+#         Args:
+#             config_class (Type[ConfigBase]): The configuration class to register.
+#             name (str | None, optional): The name under which the config class is registered. If None, the class name
+#             will be used.
+#         """
+#         inst = config_class.from_qsettings()
+#         inst.to_qsettings()  # create default values if they don't yet exist in QSettings
+#         if name:
+#             cls._registry[name] = inst
+#         else:
+#             cls._registry[config_class.__name__] = inst
 
-        This method iterates over all registered configuration instances and saves their current values to the
-        persistent QSettings store.
-        """
-        for inst in cls._registry.values():
-            inst.to_qsettings()
+#     @classmethod
+#     def save(cls) -> None:
+#         """
+#         Saves the current values of all registered configuration classes to QSettings.
 
-    @classmethod
-    def restore_defaults(cls, include: t.Iterable[str] | None = None) -> None:
-        """
-        Resets the values of the configs registered under the provided names to their default values.
+#         This method iterates over all registered configuration instances and saves their current values to the
+#         persistent QSettings store.
+#         """
+#         for inst in cls._registry.values():
+#             inst.to_qsettings()
 
-        If no names are provided, all registered configs are reset to their default values.
+#     @classmethod
+#     def restore_defaults(cls, include: t.Iterable[str] | None = None) -> None:
+#         """
+#         Resets the values of the configs registered under the provided names to their default values.
 
-        Args:
-            include (Iterable[str] | None, optional): An iterable of config names to reset or `None` to reset all
-            configs.
-        """
-        if not include:
-            for config_class in cls._registry.values():
-                config_class.restore_defaults()
-        else:
-            for name in include:
-                if name not in cls._registry:
-                    logger.warning(f"No config class registered with name '{name}'")
-                    continue
-                cls._registry[name].restore_defaults()
+#         If no names are provided, all registered configs are reset to their default values.
 
-    @classmethod
-    def create_editor_window(
-        cls, parent: QtWidgets.QWidget | None = None, include: t.Iterable[str] | None = None
-    ) -> QtWidgets.QDialog:
-        """
-        Creates a QDialog with tabs for each registered config class.
+#         Args:
+#             include (Iterable[str] | None, optional): An iterable of config names to reset or `None` to reset all
+#             configs.
+#         """
+#         if not include:
+#             for config_class in cls._registry.values():
+#                 config_class.restore_defaults()
+#         else:
+#             for name in include:
+#                 if name not in cls._registry:
+#                     logger.warning(f"No config class registered with name '{name}'")
+#                     continue
+#                 cls._registry[name].restore_defaults()
 
-        If no `include` list is provided, all registered configs are created. Otherwise, only the configs related
-        to the specified config names are created.
+#     @classmethod
+#     def create_editor_window(
+#         cls, parent: QtWidgets.QWidget | None = None, include: t.Iterable[str] | None = None
+#     ) -> QtWidgets.QDialog:
+#         """
+#         Creates a QDialog with tabs for each registered config class.
 
-        Args:
-            parent (QtWidgets.QWidget | None, optional): The parent widget for the dialog. Defaults to None.
-            include (Iterable[str] | None, optional): An iterable of config names to create editors for or `None` to
-            create editors for all registered configs.
+#         If no `include` list is provided, all registered configs are created. Otherwise, only the configs related
+#         to the specified config names are created.
 
-        Returns:
-            QtWidgets.QDialog: A QDialog with tabs for each registered config class.
-        """
-        dlg = QtWidgets.QDialog(parent)
-        dlg.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
-        dlg.setModal(True)
-        dlg.setWindowTitle("Settings")
+#         Args:
+#             parent (QtWidgets.QWidget | None, optional): The parent widget for the dialog. Defaults to None.
+#             include (Iterable[str] | None, optional): An iterable of config names to create editors for or `None` to
+#             create editors for all registered configs.
 
-        btn_box = QtWidgets.QDialogButtonBox(
-            QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel
-        )
-        btn_box.accepted.connect(dlg.accept)
-        btn_box.rejected.connect(dlg.reject)
+#         Returns:
+#             QtWidgets.QDialog: A QDialog with tabs for each registered config class.
+#         """
+#         dlg = QtWidgets.QDialog(parent)
+#         dlg.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
+#         dlg.setModal(True)
+#         dlg.setWindowTitle("Settings")
 
-        tab_widget = QtWidgets.QTabWidget()
+#         btn_box = QtWidgets.QDialogButtonBox(
+#             QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel
+#         )
+#         btn_box.accepted.connect(dlg.accept)
+#         btn_box.rejected.connect(dlg.reject)
 
-        for name, inst in cls._registry.items():
-            if include and name not in include:
-                continue
-            editor = inst.create_editor()
-            tab_widget.addTab(editor, name)
+#         tab_widget = QtWidgets.QTabWidget()
 
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(tab_widget)
-        layout.addWidget(btn_box)
+#         for name, inst in cls._registry.items():
+#             if include and name not in include:
+#                 continue
+#             editor = inst.create_editor()
+#             tab_widget.addTab(editor, name)
 
-        dlg.setLayout(layout)
-        dlg.resize(800, 600)
+#         layout = QtWidgets.QVBoxLayout()
+#         layout.addWidget(tab_widget)
+#         layout.addWidget(btn_box)
 
-        return dlg
+#         dlg.setLayout(layout)
+#         dlg.resize(800, 600)
 
-    @classmethod
-    def clean(cls, include: t.Iterable[str] | None = None) -> None:
-        """
-        Cleans QSettings by removing all settings or only specific registered config groups.
+#         return dlg
 
-        If no `include` list is provided, all settings are cleared. Otherwise, only the settings related to the
-        specified config names are removed.
+#     @classmethod
+#     def clean(cls, include: t.Iterable[str] | None = None) -> None:
+#         """
+#         Cleans QSettings by removing all settings or only specific registered config groups.
 
-        Args:
-            include (Iterable[str] | None, optional): A list of registered config names to clean from QSettings. If
-            None, all settings will be cleared.
-        """
-        qsettings = QtCore.QSettings()
+#         If no `include` list is provided, all settings are cleared. Otherwise, only the settings related to the
+#         specified config names are removed.
 
-        if not include:
-            qsettings.clear()
-        else:
-            for name in include:
-                if name not in cls._registry:
-                    logger.warning(f"No config class registered with name '{name}'")
-                    continue
-                if name in qsettings.childGroups():
-                    qsettings.remove(name)
+#         Args:
+#             include (Iterable[str] | None, optional): A list of registered config names to clean from QSettings. If
+#             None, all settings will be cleared.
+#         """
+#         qsettings = QtCore.QSettings()
 
-        qsettings.sync()
+#         if not include:
+#             qsettings.clear()
+#         else:
+#             for name in include:
+#                 if name not in cls._registry:
+#                     logger.warning(f"No config class registered with name '{name}'")
+#                     continue
+#                 if name in qsettings.childGroups():
+#                     qsettings.remove(name)
 
-    @classmethod
-    def update_value(cls, group: str, key: str, value: t.Any) -> None:
-        """
-        Updates the value of a specific attribute in a registered configuration group.
+#         qsettings.sync()
 
-        If the configuration group or attribute does not exist, an error is logged.
+#     @classmethod
+#     def update_value(cls, group: str, key: str, value: t.Any) -> None:
+#         """
+#         Updates the value of a specific attribute in a registered configuration group.
 
-        Args:
-            group (str): The name of the registered configuration group.
-            key (str): The attribute name within the configuration group to update.
-            value (Any): The new value to set for the specified attribute.
-        """
-        if group not in cls._registry:
-            logger.error(f"No config class registered with name '{group}'")
-            return
+#         If the configuration group or attribute does not exist, an error is logged.
 
-        if hasattr(cls._registry[group], key):
-            setattr(cls._registry[group], key, value)
-        else:
-            logger.error(f"No attribute '{key}' in config class '{group}'")
+#         Args:
+#             group (str): The name of the registered configuration group.
+#             key (str): The attribute name within the configuration group to update.
+#             value (Any): The new value to set for the specified attribute.
+#         """
+#         if group not in cls._registry:
+#             logger.error(f"No config class registered with name '{group}'")
+#             return
 
-        cls.save()
+#         if hasattr(cls._registry[group], key):
+#             setattr(cls._registry[group], key, value)
+#         else:
+#             logger.error(f"No attribute '{key}' in config class '{group}'")
 
-    @classmethod
-    def create_snapshot(cls) -> dict[str, t.Any]:
-        """
-        Creates a snapshot of the current state of all registered configuration groups.
+#         cls.save()
 
-        The snapshot contains the current values of all attributes in each configuration group.
+#     @classmethod
+#     def create_snapshot(cls) -> dict[str, t.Any]:
+#         """
+#         Creates a snapshot of the current state of all registered configuration groups.
 
-        Returns:
-            dict[str, Any]: A dictionary where keys are the names of registered configuration groups and values are
-            dictionaries representing the current state of each group's attributes.
-        """
-        return {key: attrs.asdict(inst) for key, inst in cls._registry.items()}
+#         The snapshot contains the current values of all attributes in each configuration group.
 
-    @classmethod
-    def restore_snapshot(cls, snapshot: dict[str, t.Any]) -> None:
-        """
-        Restores the state of all registered configuration groups from a snapshot.
+#         Returns:
+#             dict[str, Any]: A dictionary where keys are the names of registered configuration groups and values are
+#             dictionaries representing the current state of each group's attributes.
+#         """
+#         return {key: attrs.asdict(inst) for key, inst in cls._registry.items()}
 
-        The snapshot should be a dictionary where keys are group names and values are dictionaries representing the
-        state of the group's attributes. Each attribute in the snapshot is restored to its value in the provided
-        snapshot.
+#     @classmethod
+#     def restore_snapshot(cls, snapshot: dict[str, t.Any]) -> None:
+#         """
+#         Restores the state of all registered configuration groups from a snapshot.
 
-        Args:
-            snapshot (dict[str, Any]): A dictionary representing the snapshot of the configuration groups' state to
-            restore.
-        """
-        for grp, grp_dict in snapshot.items():
-            for key, value in grp_dict.items():
-                cls.update_value(grp, key, value)
+#         The snapshot should be a dictionary where keys are group names and values are dictionaries representing the
+#         state of the group's attributes. Each attribute in the snapshot is restored to its value in the provided
+#         snapshot.
+
+#         Args:
+#             snapshot (dict[str, Any]): A dictionary representing the snapshot of the configuration groups' state to
+#             restore.
+#         """
+#         for grp, grp_dict in snapshot.items():
+#             for key, value in grp_dict.items():
+#                 cls.update_value(grp, key, value)

@@ -7,7 +7,7 @@ from attrs import NOTHING
 from PySide6 import QtCore, QtGui, QtWidgets
 from pyside_widgets import SettingCard
 
-from .config_manager import ConfigManager
+from . import config
 
 if t.TYPE_CHECKING:
     from . import EditorWidgetInfo
@@ -63,7 +63,7 @@ def update_qsettings[T](inst: attrs.AttrsInstance, attr: t.Any, value: T) -> T:
 class ConfigBase:
     @classmethod
     def __attrs_init_subclass__(cls) -> None:
-        ConfigManager.register(cls)
+        config.register(cls)
 
     @classmethod
     def from_qsettings(cls) -> t.Self:
