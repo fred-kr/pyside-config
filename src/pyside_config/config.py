@@ -7,13 +7,10 @@ from PySide6 import QtCore, QtWidgets
 if t.TYPE_CHECKING:
     from ._base import ConfigBase
 
-_C = t.TypeVar("_C", bound="ConfigBase")
-
-
 registry: dict[str, "ConfigBase"] = {}
 
 
-def register(config_class: t.Type[_C], name: str | None = None) -> None:
+def register(config_class: t.Type["ConfigBase"], name: str | None = None) -> None:
     """
     Adds a config class to the registry.
 
@@ -26,6 +23,33 @@ def register(config_class: t.Type[_C], name: str | None = None) -> None:
         registry[name] = config_class.from_qsettings()
     else:
         registry[config_class.__name__] = config_class.from_qsettings()
+
+
+def get(name: str) -> "ConfigBase":
+    """
+    Returns the config class registered under the provided name.
+
+    Args:
+        name (str): The name of the config class.
+
+    Returns:
+        Config: The config class registered under the provided name.
+    """
+    return registry[name]
+
+
+def update_name(old_name: str, new_name: str) -> None:
+    """
+    Updates the name under which a config class is registered.
+
+    Args:
+        old_name (str): The old name of the config class.
+        new_name (str): The new name of the config class.
+    """
+    if old_name not in registry:
+        logger.exception(f"No config class registered with name '{old_name}'")
+        return
+    registry[new_name] = registry.pop(old_name)
 
 
 def save() -> None:
@@ -91,19 +115,6 @@ def available() -> list[str]:
         list[str]: A list of all registered config names.
     """
     return list(registry.keys())
-
-
-def get(name: str) -> "ConfigBase":
-    """
-    Returns the config class registered under the provided name.
-
-    Args:
-        name (str): The name of the config class.
-
-    Returns:
-        ConfigBase: The config class registered under the provided name.
-    """
-    return registry[name]
 
 
 def update_value(group: str, key: str, value: t.Any) -> None:
