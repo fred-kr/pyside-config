@@ -60,8 +60,8 @@ class ConfigBase:
         Creates an instance of the config class and initializes it with values from QSettings. If no values are found in
         QSettings, the field's default value will be used.
         """
-        if not QtWidgets.QApplication.instance():
-            raise RuntimeError("QApplication is not initialized")
+        if not QtWidgets.QApplication.organizationName() or not QtWidgets.QApplication.applicationName():
+            raise RuntimeError("App name and organization must be set before importing `pyside_config`.")
         settings = QtCore.QSettings()
         init_values = {}
         for field in attrs.fields(cls):
@@ -80,8 +80,8 @@ class ConfigBase:
         """
         Saves the attributes of the current instance to QSettings.
         """
-        if not QtWidgets.QApplication.instance():
-            raise RuntimeError("QApplication is not initialized")
+        if not QtWidgets.QApplication.organizationName() or not QtWidgets.QApplication.applicationName():
+            raise RuntimeError("App name and organization must be set before importing `pyside_config`.")
         settings = QtCore.QSettings()
         for field in attrs.fields(self.__class__):
             path = get_setting_path(self, field)
@@ -194,8 +194,8 @@ def update_qsettings[T](inst: attrs.AttrsInstance, attr: t.Any, value: T) -> T:
     Returns:
         T: The value that was set in the settings.
     """
-    if not QtWidgets.QApplication.instance():
-        raise RuntimeError("QApplication is not initialized")
+    if not QtWidgets.QApplication.organizationName() or not QtWidgets.QApplication.applicationName():
+        raise RuntimeError("App name and organization must be set before importing `pyside_config`.")
     path = get_setting_path(inst, attr)
     settings = QtCore.QSettings()
     if path:

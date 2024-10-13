@@ -103,8 +103,8 @@ def clean(include: t.Iterable[str] | None = None) -> None:
         include (Iterable[str] | None, optional): A list of registered config names to clean from QSettings. If
         None, all settings will be cleared.
     """
-    if not QtWidgets.QApplication.instance():
-        raise RuntimeError("QApplication is not initialized")
+    if not QtWidgets.QApplication.organizationName() or not QtWidgets.QApplication.applicationName():
+        raise RuntimeError("App name and organization must be set before importing `pyside_config`.")
     qsettings = QtCore.QSettings()
 
     if not include:
