@@ -1,28 +1,42 @@
+import functools
 import typing as t
 
 import attrs
+from bidict import bidict
 from loguru import logger
-from PySide6 import QtCore, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
+
+from ._base import get_setting_path
 
 if t.TYPE_CHECKING:
     from ._base import ConfigBase
 
-registry: dict[str, "ConfigBase"] = {}
+config_registry: bidict[str, "ConfigBase"] = bidict()
 
 
-def register(config_class: t.Type["ConfigBase"], name: str | None = None) -> None:
+def register(config_class: t.Type["ConfigBase"], name: str | None = None, overwrite: bool = False) -> None:
     """
-    Adds a config class to the registry.
+    Adds an instance of the provided config class to the `config_registry` dictionary.
+
+    If an instance of the passed config class already exists as a value in the `config_registry` dictionary, the
+    existing instance is removed. A new instance of the provided config class is created via its `from_qsettings` method
+    and added to the `config_registry` dictionary with the provided name.
 
     Args:
-        config_class (Type[ConfigBase]): The config class to add to the registry.
+        config_class (Type[ConfigBase]): The config class to add to the `config_registry` dictionary.
         name (str | None, optional): The name under which the config class is registered. If None, the class name
         will be used.
+        overwrite (bool, optional): Whether to overwrite an existing config class with the same name. Defaults to
+        False.
     """
-    if name:
-        registry[name] = config_class.from_qsettings()
+    name = name or config_class.__name__
+    config_instance = config_class.from_qsettings()
+
+    if name in config_registry and overwrite or name not in config_registry:
+        config_registry[name] = config_instance
     else:
-        registry[config_class.__name__] = config_class.from_qsettings()
+        logger.error(f"'{name}' already used for '{config_registry[name]}'.")
+        return
 
 
 def get(name: str) -> "ConfigBase":
@@ -35,7 +49,7 @@ def get(name: str) -> "ConfigBase":
     Returns:
         Config: The config class registered under the provided name.
     """
-    return registry[name]
+    return config_registry[name]
 
 
 def update_name(old_name: str, new_name: str) -> None:
@@ -46,18 +60,18 @@ def update_name(old_name: str, new_name: str) -> None:
         old_name (str): The old name of the config class.
         new_name (str): The new name of the config class.
     """
-    if old_name not in registry:
+    if old_name not in config_registry:
         logger.exception(f"No config class registered with name '{old_name}'")
         return
-    registry[new_name] = registry.pop(old_name)
+    config_registry[new_name] = config_registry.pop(old_name)
 
 
 def save() -> None:
     """
     Saves the current values of all registered configuration classes to QSettings.
     """
-    for inst in registry.values():
-        inst.to_qsettings()
+    for config_class in config_registry.values():
+        config_class.to_qsettings()
 
 
 def reset(include: t.Iterable[str] | None = None) -> None:
@@ -71,14 +85,14 @@ def reset(include: t.Iterable[str] | None = None) -> None:
         configs.
     """
     if not include:
-        for config_class in registry.values():
+        for config_class in config_registry.values():
             config_class.restore_defaults()
     else:
         for name in include:
-            if name not in registry:
+            if name not in config_registry:
                 logger.warning(f"No config class registered with name '{name}'")
                 continue
-            registry[name].restore_defaults()
+            config_registry[name].restore_defaults()
 
 
 def clean(include: t.Iterable[str] | None = None) -> None:
@@ -92,13 +106,15 @@ def clean(include: t.Iterable[str] | None = None) -> None:
         include (Iterable[str] | None, optional): A list of registered config names to clean from QSettings. If
         None, all settings will be cleared.
     """
+    if not QtWidgets.QApplication.instance():
+        raise RuntimeError("QApplication is not initialized")
     qsettings = QtCore.QSettings()
 
     if not include:
         qsettings.clear()
     else:
         for name in include:
-            if name not in registry:
+            if name not in config_registry:
                 logger.warning(f"No config class registered with name '{name}'")
                 continue
             if name in qsettings.childGroups():
@@ -114,7 +130,7 @@ def available() -> list[str]:
     Returns:
         list[str]: A list of all registered config names.
     """
-    return list(registry.keys())
+    return list(config_registry.keys())
 
 
 def update_value(group: str, key: str, value: t.Any) -> None:
@@ -125,12 +141,12 @@ def update_value(group: str, key: str, value: t.Any) -> None:
         name (str): The name of the config class.
         value (Any): The new value to set.
     """
-    if group not in registry:
+    if group not in config_registry:
         logger.error(f"No config class registered with name '{group}'")
         return
 
-    if hasattr(registry[group], key):
-        setattr(registry[group], key, value)
+    if hasattr(config_registry[group], key):
+        setattr(config_registry[group], key, value)
     else:
         logger.error(f"No attribute '{key}' in config class '{group}'")
 
@@ -147,7 +163,7 @@ def create_snapshot() -> dict[str, t.Any]:
         dict[str, Any]: A dictionary where keys are the names of registered configuration groups and values are
         dictionaries representing the current state of each group's attributes.
     """
-    return {key: attrs.asdict(inst) for key, inst in registry.items()}
+    return {key: attrs.asdict(inst) for key, inst in config_registry.items()}
 
 
 def restore_snapshot(snapshot: dict[str, t.Any]) -> None:
@@ -194,7 +210,7 @@ def create_editor(parent: QtWidgets.QWidget | None = None, include: t.Iterable[s
     btn_box.rejected.connect(dlg.reject)
 
     tab_widget = QtWidgets.QTabWidget()
-    for name, inst in registry.items():
+    for name, inst in config_registry.items():
         if not include or name in include:
             tab = inst.create_editor()
             tab_widget.addTab(tab, name)
@@ -207,3 +223,34 @@ def create_editor(parent: QtWidgets.QWidget | None = None, include: t.Iterable[s
     dlg.resize(800, 600)
 
     return dlg
+
+
+def update_qsettings[T](inst: attrs.AttrsInstance, attr: t.Any, value: T) -> T:
+    """
+    Updates the QSettings with the specified attribute and value.
+
+    Args:
+        inst (attrs.AttrsInstance):
+            The instance of the attrs-based class containing the attribute to update.
+        attr (Any):
+            The attribute being updated.
+        value (T):
+            The value to set for the given attribute, can be any type supported by QSettings.
+
+    Returns:
+        T: The value that was set in the settings.
+    """
+    if not QtWidgets.QApplication.instance():
+        raise RuntimeError("QApplication is not initialized")
+    path = get_setting_path(inst, attr)
+    settings = QtCore.QSettings()
+    if path:
+        if isinstance(value, QtGui.QColor):
+            settings.setValue(path, value.name())
+        else:
+            settings.setValue(path, value)
+        settings.sync()
+    return value
+
+
+define_config = functools.partial(attrs.define, eq=False, on_setattr=update_qsettings)

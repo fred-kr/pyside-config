@@ -1,4 +1,6 @@
+import contextlib
 import inspect
+import os
 import typing as t
 
 import attrs
@@ -9,11 +11,20 @@ from pyside_widgets import SettingCard
 
 from . import config
 
-if t.TYPE_CHECKING:
-    from . import EditorWidgetInfo
-
 SETTER_METADATA_KEY = "__setter"
 NOTHING_TYPE = t.Literal[NOTHING]
+
+ORG_NAME = os.getenv("")
+
+
+@attrs.define
+class EditorWidgetInfo[W: QtWidgets.QWidget]:
+    label: str
+    widget_factory: t.Callable[..., W]
+    sig_value_changed: str
+    set_value_method: str
+    icon: QtGui.QIcon | None = None
+    widget_properties: "WidgetPropertiesBase[W] | None" = None
 
 
 def get_setting_path(inst_or_cls: attrs.AttrsInstance | t.Type[attrs.AttrsInstance], attr: t.Any) -> str:
@@ -33,36 +44,16 @@ def get_setting_path(inst_or_cls: attrs.AttrsInstance | t.Type[attrs.AttrsInstan
     return f"{class_name}/{attr.name}"
 
 
-def update_qsettings[T](inst: attrs.AttrsInstance, attr: t.Any, value: T) -> T:
-    """
-    Updates the QSettings with the specified attribute and value.
-
-    Args:
-        inst (attrs.AttrsInstance):
-            The instance of the attrs-based class containing the attribute to update.
-        attr (Any):
-            The attribute being updated.
-        value (T):
-            The value to set for the given attribute, can be any type supported by QSettings.
-
-    Returns:
-        T: The value that was set in the settings.
-    """
-    path = get_setting_path(inst, attr)
-    settings = QtCore.QSettings()
-    if path:
-        if isinstance(value, QtGui.QColor):
-            settings.setValue(path, value.name())
-        else:
-            settings.setValue(path, value)
-        settings.sync()
-    return value
-
-
-@attrs.define
+@attrs.define(init=False, eq=False)
 class ConfigBase:
     @classmethod
     def __attrs_init_subclass__(cls) -> None:
+        if cls is ConfigBase:
+            raise TypeError(
+                "ConfigBase cannot be instantiated directly and should only be used as a base for your "
+                "config classes."
+            )
+
         config.register(cls)
 
     @classmethod
@@ -71,13 +62,18 @@ class ConfigBase:
         Creates an instance of the config class and initializes it with values from QSettings. If no values are found in
         QSettings, the field's default value will be used.
         """
+        if not QtWidgets.QApplication.instance():
+            raise RuntimeError("QApplication is not initialized")
         settings = QtCore.QSettings()
         init_values = {}
         for field in attrs.fields(cls):
             path = get_setting_path(cls, field)
-            value = settings.value(path, field.default)
+            value = settings.value(path, defaultValue=field.default)
             if isinstance(value, Factory):
-                value = value.factory()  # type: ignore
+                value = value.factory()
+            with contextlib.suppress(Exception):
+                value = field.type(value)
+
             init_values[field.name] = value
 
         return cls(**init_values)
@@ -86,6 +82,8 @@ class ConfigBase:
         """
         Saves the attributes of the current instance to QSettings.
         """
+        if not QtWidgets.QApplication.instance():
+            raise RuntimeError("QApplication is not initialized")
         settings = QtCore.QSettings()
         for field in attrs.fields(self.__class__):
             path = get_setting_path(self, field)
