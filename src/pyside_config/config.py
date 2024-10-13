@@ -1,12 +1,9 @@
-import functools
 import typing as t
 
 import attrs
 from bidict import bidict
 from loguru import logger
-from PySide6 import QtCore, QtGui, QtWidgets
-
-from ._base import get_setting_path
+from PySide6 import QtCore, QtWidgets
 
 if t.TYPE_CHECKING:
     from ._base import ConfigBase
@@ -61,7 +58,7 @@ def update_name(old_name: str, new_name: str) -> None:
         new_name (str): The new name of the config class.
     """
     if old_name not in config_registry:
-        logger.exception(f"No config class registered with name '{old_name}'")
+        logger.error(f"No config class registered with name '{old_name}'")
         return
     config_registry[new_name] = config_registry.pop(old_name)
 
@@ -223,34 +220,3 @@ def create_editor(parent: QtWidgets.QWidget | None = None, include: t.Iterable[s
     dlg.resize(800, 600)
 
     return dlg
-
-
-def update_qsettings[T](inst: attrs.AttrsInstance, attr: t.Any, value: T) -> T:
-    """
-    Updates the QSettings with the specified attribute and value.
-
-    Args:
-        inst (attrs.AttrsInstance):
-            The instance of the attrs-based class containing the attribute to update.
-        attr (Any):
-            The attribute being updated.
-        value (T):
-            The value to set for the given attribute, can be any type supported by QSettings.
-
-    Returns:
-        T: The value that was set in the settings.
-    """
-    if not QtWidgets.QApplication.instance():
-        raise RuntimeError("QApplication is not initialized")
-    path = get_setting_path(inst, attr)
-    settings = QtCore.QSettings()
-    if path:
-        if isinstance(value, QtGui.QColor):
-            settings.setValue(path, value.name())
-        else:
-            settings.setValue(path, value)
-        settings.sync()
-    return value
-
-
-define_config = functools.partial(attrs.define, eq=False, on_setattr=update_qsettings)

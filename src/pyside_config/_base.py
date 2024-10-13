@@ -1,6 +1,6 @@
 import contextlib
+import functools
 import inspect
-import os
 import typing as t
 
 import attrs
@@ -13,8 +13,6 @@ from . import config
 
 SETTER_METADATA_KEY = "__setter"
 NOTHING_TYPE = t.Literal[NOTHING]
-
-ORG_NAME = os.getenv("")
 
 
 @attrs.define
@@ -179,3 +177,34 @@ class WidgetPropertiesBase[W: QtWidgets.QWidget]:
             if field.name == "styleSheet" and property_value == "":  # allow using None to clear a style sheet
                 continue
             getattr(widget, field.metadata[SETTER_METADATA_KEY])(property_value)
+
+
+def update_qsettings[T](inst: attrs.AttrsInstance, attr: t.Any, value: T) -> T:
+    """
+    Updates the QSettings with the specified attribute and value.
+
+    Args:
+        inst (attrs.AttrsInstance):
+            The instance of the attrs-based class containing the attribute to update.
+        attr (Any):
+            The attribute being updated.
+        value (T):
+            The value to set for the given attribute, can be any type supported by QSettings.
+
+    Returns:
+        T: The value that was set in the settings.
+    """
+    if not QtWidgets.QApplication.instance():
+        raise RuntimeError("QApplication is not initialized")
+    path = get_setting_path(inst, attr)
+    settings = QtCore.QSettings()
+    if path:
+        if isinstance(value, QtGui.QColor):
+            settings.setValue(path, value.name())
+        else:
+            settings.setValue(path, value)
+        settings.sync()
+    return value
+
+
+define_config = functools.partial(attrs.define, eq=False, on_setattr=update_qsettings)
