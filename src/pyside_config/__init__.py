@@ -1,13 +1,4 @@
-from ._base import ConfigBase, EditorWidgetInfo, WidgetPropertiesBase, define_config
-from .properties import ComboBoxProperties, DoubleSpinBoxProperties, LineEditProperties, SpinBoxProperties
+from PySide6 import QtWidgets
 
-__all__ = [
-    "ConfigBase",
-    "WidgetPropertiesBase",
-    "EditorWidgetInfo",
-    "ComboBoxProperties",
-    "DoubleSpinBoxProperties",
-    "LineEditProperties",
-    "SpinBoxProperties",
-    "define_config",
-]
+if not QtWidgets.QApplication.organizationName() or not QtWidgets.QApplication.applicationName():
+    raise RuntimeError("App name and organization must be set before importing `pyside_config`.")

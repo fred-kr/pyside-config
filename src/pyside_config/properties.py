@@ -3,9 +3,15 @@ import typing as t
 import attrs
 from PySide6 import QtWidgets
 
-from ._base import SETTER_METADATA_KEY, WidgetPropertiesBase
+SETTER_KEY = "__setter"
 
-__all__ = ["SpinBoxProperties", "DoubleSpinBoxProperties", "LineEditProperties", "ComboBoxProperties"]
+__all__ = [
+    "WidgetPropertiesBase",
+    "SpinBoxProperties",
+    "DoubleSpinBoxProperties",
+    "LineEditProperties",
+    "ComboBoxProperties",
+]
 
 
 def _check_step_size(inst: "SpinBoxProperties | DoubleSpinBoxProperties", attr: t.Any, value: int | float) -> None:
@@ -25,50 +31,73 @@ def _check_lower_bound(inst: "SpinBoxProperties | DoubleSpinBoxProperties", attr
 
 
 @attrs.define
+class WidgetPropertiesBase[W: QtWidgets.QWidget]:
+    """
+    Base class for widget properties.
+    """
+
+    styleSheet: str | None = attrs.field(default="", metadata={SETTER_KEY: "setStyleSheet"})
+
+    def apply_to_widget(self, widget: W) -> None:
+        """
+        Applies the current values of the class attributes to the specified widget.
+
+        This method iterates through the fields of the class and sets the corresponding properties on the provided
+        widget, using defined setter methods.
+
+        Args:
+            widget (W): The widget to which the attribute values will be applied.
+        """
+        for field in attrs.fields(self.__class__):
+            property_value = getattr(self, field.name)
+            if field.name == "styleSheet" and property_value == "":  # allow using None to clear a style sheet
+                continue
+            getattr(widget, field.metadata[SETTER_KEY])(property_value)
+
+
+@attrs.define
 class SpinBoxProperties(WidgetPropertiesBase[QtWidgets.QSpinBox]):
     minimum: int = attrs.field(
-        default=0, converter=int, validator=_check_lower_bound, metadata={SETTER_METADATA_KEY: "setMinimum"}
+        default=0, converter=int, validator=_check_lower_bound, metadata={SETTER_KEY: "setMinimum"}
     )
     maximum: int = attrs.field(
-        default=1_000_000, converter=int, validator=_check_upper_bound, metadata={SETTER_METADATA_KEY: "setMaximum"}
+        default=1_000_000, converter=int, validator=_check_upper_bound, metadata={SETTER_KEY: "setMaximum"}
     )
     singleStep: int = attrs.field(
-        default=1, converter=int, validator=_check_step_size, metadata={SETTER_METADATA_KEY: "setSingleStep"}
+        default=1, converter=int, validator=_check_step_size, metadata={SETTER_KEY: "setSingleStep"}
     )
-    prefix: str | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setPrefix"})
-    suffix: str | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setSuffix"})
-    hasFrame: bool = attrs.field(default=False, metadata={SETTER_METADATA_KEY: "setFrame"})
+    prefix: str | None = attrs.field(default=None, metadata={SETTER_KEY: "setPrefix"})
+    suffix: str | None = attrs.field(default=None, metadata={SETTER_KEY: "setSuffix"})
+    hasFrame: bool = attrs.field(default=False, metadata={SETTER_KEY: "setFrame"})
 
 
 @attrs.define
 class DoubleSpinBoxProperties(WidgetPropertiesBase[QtWidgets.QDoubleSpinBox]):
     minimum: float = attrs.field(
-        default=0.0, converter=float, validator=_check_lower_bound, metadata={SETTER_METADATA_KEY: "setMinimum"}
+        default=0.0, converter=float, validator=_check_lower_bound, metadata={SETTER_KEY: "setMinimum"}
     )
     maximum: float = attrs.field(
-        default=1e6, converter=float, validator=_check_upper_bound, metadata={SETTER_METADATA_KEY: "setMaximum"}
+        default=1e6, converter=float, validator=_check_upper_bound, metadata={SETTER_KEY: "setMaximum"}
     )
     singleStep: float = attrs.field(
-        default=0.1, converter=float, validator=_check_step_size, metadata={SETTER_METADATA_KEY: "setSingleStep"}
+        default=0.1, converter=float, validator=_check_step_size, metadata={SETTER_KEY: "setSingleStep"}
     )
     decimals: int = attrs.field(
-        default=2, converter=int, validator=attrs.validators.ge(0), metadata={SETTER_METADATA_KEY: "setDecimals"}
+        default=2, converter=int, validator=attrs.validators.ge(0), metadata={SETTER_KEY: "setDecimals"}
     )
-    prefix: str | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setPrefix"})
-    suffix: str | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setSuffix"})
-    hasFrame: bool = attrs.field(default=False, metadata={SETTER_METADATA_KEY: "setFrame"})
+    prefix: str | None = attrs.field(default=None, metadata={SETTER_KEY: "setPrefix"})
+    suffix: str | None = attrs.field(default=None, metadata={SETTER_KEY: "setSuffix"})
+    hasFrame: bool = attrs.field(default=False, metadata={SETTER_KEY: "setFrame"})
 
 
 @attrs.define
 class LineEditProperties(WidgetPropertiesBase[QtWidgets.QLineEdit]):
-    clearButtonEnabled: bool = attrs.field(
-        default=True, converter=bool, metadata={SETTER_METADATA_KEY: "setClearButtonEnabled"}
-    )
-    completer: QtWidgets.QCompleter | None = attrs.field(default=None, metadata={SETTER_METADATA_KEY: "setCompleter"})
-    hasFrame: bool = attrs.field(default=False, metadata={SETTER_METADATA_KEY: "setFrame"})
+    clearButtonEnabled: bool = attrs.field(default=True, converter=bool, metadata={SETTER_KEY: "setClearButtonEnabled"})
+    completer: QtWidgets.QCompleter | None = attrs.field(default=None, metadata={SETTER_KEY: "setCompleter"})
+    hasFrame: bool = attrs.field(default=False, metadata={SETTER_KEY: "setFrame"})
 
 
 @attrs.define
 class ComboBoxProperties(WidgetPropertiesBase[QtWidgets.QComboBox]):
-    isEditable: bool = attrs.field(default=False, metadata={SETTER_METADATA_KEY: "setEditable"})
-    hasFrame: bool = attrs.field(default=False, metadata={SETTER_METADATA_KEY: "setFrame"})
+    isEditable: bool = attrs.field(default=False, metadata={SETTER_KEY: "setEditable"})
+    hasFrame: bool = attrs.field(default=False, metadata={SETTER_KEY: "setFrame"})
