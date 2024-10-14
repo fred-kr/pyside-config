@@ -13,6 +13,8 @@ if t.TYPE_CHECKING:
 
 QTYPE_KEY = "__qtype"  # This key's value should be a valid argument to the `type` argument of `QtCore.QSettings.value`
 
+_C = t.TypeVar("_C", bound=type)
+
 
 class ConfigInstance(attrs.AttrsInstance):
     """
@@ -361,10 +363,18 @@ def _create_editor(self: ConfigInstance, **kwargs: t.Any) -> QtWidgets.QWidget:
     return container_widget
 
 
-def config_define[T: type](target_cls: T) -> T:
+def config_define(target_cls: _C) -> _C:
     """
-    Extension of the `attrs.define` decorator that adds methods for interacting with QSettings and registers the class
-    with the `config` module.
+        Extension of the `attrs.define` decorator that adds methods for interacting with QSettings and registers the class
+        with the `config` module.
+
+        Usage:
+            @config_define
+            class MyConfig:
+                ...
+
+    Currently only this exact usage is supported, since i haven't figured out how to deal with `target_cls` being None
+    (i.e. `@config_define()`)
     """
     attrs_class = attrs.define(target_cls, eq=False, on_setattr=update_qsettings)
 

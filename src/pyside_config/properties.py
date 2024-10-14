@@ -5,14 +5,6 @@ from PySide6 import QtWidgets
 
 SETTER_KEY = "__setter"
 
-__all__ = [
-    "WidgetPropertiesBase",
-    "SpinBoxProperties",
-    "DoubleSpinBoxProperties",
-    "LineEditProperties",
-    "ComboBoxProperties",
-]
-
 
 def _check_step_size(inst: "SpinBoxProperties | DoubleSpinBoxProperties", attr: t.Any, value: int | float) -> None:
     max_step = inst.maximum - inst.minimum
