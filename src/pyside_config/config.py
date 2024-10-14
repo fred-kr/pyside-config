@@ -361,7 +361,7 @@ def _create_editor(self: ConfigInstance, **kwargs: t.Any) -> QtWidgets.QWidget:
     return container_widget
 
 
-def config_define(target_cls: type) -> t.Type[ConfigInstance]:
+def config_define[T: type](target_cls: T) -> T:
     """
     Extension of the `attrs.define` decorator that adds methods for interacting with QSettings and registers the class
     with the `config` module.
