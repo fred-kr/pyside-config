@@ -93,3 +93,9 @@ class LineEditProperties(WidgetPropertiesBase[QtWidgets.QLineEdit]):
 class ComboBoxProperties(WidgetPropertiesBase[QtWidgets.QComboBox]):
     isEditable: bool = attrs.field(default=False, metadata={SETTER_KEY: "setEditable"})
     hasFrame: bool = attrs.field(default=False, metadata={SETTER_KEY: "setFrame"})
+
+
+@attrs.define
+class CheckBoxProperties(WidgetPropertiesBase[QtWidgets.QCheckBox]):
+    isTristate: bool = attrs.field(default=False, metadata={SETTER_KEY: "setTristate"})
+    
