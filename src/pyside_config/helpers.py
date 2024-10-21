@@ -1,3 +1,4 @@
+import decimal
 import typing as t
 
 from PySide6 import QtGui, QtWidgets
@@ -35,6 +36,15 @@ class DoubleSpinBoxKwargs(t.TypedDict, total=False):
     minimum: float
     maximum: float
     singleStep: float
+    prefix: str
+    suffix: str
+    hasFrame: bool
+
+
+class DecimalSpinBoxKwargs(t.TypedDict, total=False):
+    minimum: decimal.Decimal
+    maximum: decimal.Decimal
+    singleStep: decimal.Decimal
     prefix: str
     suffix: str
     hasFrame: bool
@@ -106,6 +116,24 @@ def make_double_spin_box_info(
     set_value_method: str = "setValue",
     icon: QtGui.QIcon | None = None,
     **kwargs: t.Unpack[DoubleSpinBoxKwargs],
+) -> EditorWidgetInfo[QtWidgets.QDoubleSpinBox]:
+    return EditorWidgetInfo(
+        label=label,
+        widget_factory=widget_factory,
+        sig_value_changed=sig_value_changed,
+        set_value_method=set_value_method,
+        icon=icon,
+        widget_properties=DoubleSpinBoxProperties(**kwargs),
+    )
+
+
+def make_decimal_spin_box_info(
+    label: str,
+    widget_factory: t.Callable[..., QtWidgets.QDoubleSpinBox] = QtWidgets.QDoubleSpinBox,
+    sig_value_changed: str = "valueChanged",
+    set_value_method: str = "setValue",
+    icon: QtGui.QIcon | None = None,
+    **kwargs: t.Unpack[DecimalSpinBoxKwargs],
 ) -> EditorWidgetInfo[QtWidgets.QDoubleSpinBox]:
     return EditorWidgetInfo(
         label=label,
