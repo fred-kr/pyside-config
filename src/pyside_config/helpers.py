@@ -2,12 +2,13 @@ import decimal
 import typing as t
 
 from PySide6 import QtGui, QtWidgets
+from pyside_widgets import DecimalSpinBox
 
 from .config import EditorWidgetInfo
 from .properties import (
     CheckBoxProperties,
     ComboBoxProperties,
-    DoubleSpinBoxProperties,
+    DecimalSpinBoxProperties,
     LineEditProperties,
     SpinBoxProperties,
 )
@@ -23,31 +24,30 @@ class CheckBoxKwargs(t.TypedDict, total=False):
     isTristate: bool
 
 
-class SpinBoxKwargs(t.TypedDict, total=False):
+class _CommonSpinBoxKwargs(t.TypedDict, total=False):
+    prefix: str
+    suffix: str
+    hasFrame: bool
+
+
+class IntSpinBoxKwargs(_CommonSpinBoxKwargs, total=False):
     minimum: int
     maximum: int
     singleStep: int
-    prefix: str
-    suffix: str
-    hasFrame: bool
 
 
-class DoubleSpinBoxKwargs(t.TypedDict, total=False):
+class DoubleSpinBoxKwargs(_CommonSpinBoxKwargs, total=False):
     minimum: float
     maximum: float
     singleStep: float
-    prefix: str
-    suffix: str
-    hasFrame: bool
+    decimals: int
 
 
-class DecimalSpinBoxKwargs(t.TypedDict, total=False):
+class DecimalSpinBoxKwargs(_CommonSpinBoxKwargs, total=False):
     minimum: decimal.Decimal
     maximum: decimal.Decimal
     singleStep: decimal.Decimal
-    prefix: str
-    suffix: str
-    hasFrame: bool
+    decimals: int
 
 
 class ComboBoxKwargs(t.TypedDict, total=False):
@@ -97,7 +97,7 @@ def make_spin_box_info(
     sig_value_changed: str = "valueChanged",
     set_value_method: str = "setValue",
     icon: QtGui.QIcon | None = None,
-    **kwargs: t.Unpack[SpinBoxKwargs],
+    **kwargs: t.Unpack[IntSpinBoxKwargs],
 ) -> EditorWidgetInfo[QtWidgets.QSpinBox]:
     return EditorWidgetInfo(
         label=label,
@@ -123,25 +123,25 @@ def make_double_spin_box_info(
         sig_value_changed=sig_value_changed,
         set_value_method=set_value_method,
         icon=icon,
-        widget_properties=DoubleSpinBoxProperties(**kwargs),
+        widget_properties=DecimalSpinBoxProperties(**kwargs),
     )
 
 
 def make_decimal_spin_box_info(
     label: str,
-    widget_factory: t.Callable[..., QtWidgets.QDoubleSpinBox] = QtWidgets.QDoubleSpinBox,
+    widget_factory: t.Callable[..., DecimalSpinBox] = DecimalSpinBox,
     sig_value_changed: str = "valueChanged",
     set_value_method: str = "setValue",
     icon: QtGui.QIcon | None = None,
     **kwargs: t.Unpack[DecimalSpinBoxKwargs],
-) -> EditorWidgetInfo[QtWidgets.QDoubleSpinBox]:
+) -> EditorWidgetInfo[DecimalSpinBox]:
     return EditorWidgetInfo(
         label=label,
         widget_factory=widget_factory,
         sig_value_changed=sig_value_changed,
         set_value_method=set_value_method,
         icon=icon,
-        widget_properties=DoubleSpinBoxProperties(**kwargs),
+        widget_properties=DecimalSpinBoxProperties(**kwargs),
     )
 
 
