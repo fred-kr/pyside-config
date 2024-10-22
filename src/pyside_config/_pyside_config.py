@@ -163,16 +163,16 @@ def update_value(group: str, key: str, value: t.Any) -> None:
         ValueError: If the config class or attribute does not exist.
     """
     try:
-        config_class = _config_registry[group]
+        config_class = get_config(group)
     except KeyError as e:
         raise ValueError(f"No config class registered with name '{group}'") from e
 
-    if key not in attrs.fields(config_class.__class__):
+    if hasattr(config_class, key):
+        setattr(config_class, key, value)
+    else:
         raise ValueError(f"No attribute '{key}' in config class '{group}'")
 
-    setattr(config_class, key, value)
-    save()
-
+    config_class.to_qsettings()
 
 def create_snapshot() -> dict[str, t.Any]:
     """
