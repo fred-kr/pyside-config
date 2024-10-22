@@ -4,7 +4,7 @@ import typing as t
 from PySide6 import QtGui, QtWidgets
 from pyside_widgets import DecimalSpinBox
 
-from .config import EditorWidgetInfo
+from ._pyside_config import EditorWidgetInfo
 from .properties import (
     CheckBoxProperties,
     ComboBoxProperties,

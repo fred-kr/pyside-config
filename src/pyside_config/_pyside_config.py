@@ -1,10 +1,9 @@
-import inspect
 import typing as t
+from abc import abstractmethod
 
 import attrs
 from attr._make import Factory
 from bidict import bidict
-from loguru import logger
 from PySide6 import QtCore, QtGui, QtWidgets
 from pyside_widgets import SettingCard
 
@@ -16,47 +15,55 @@ QTYPE_KEY = "__qtype"  # This key's value should be a valid argument to the `typ
 _C = t.TypeVar("_C", bound=type)
 
 
-class ConfigInstance(attrs.AttrsInstance):
+class ConfigInstance(attrs.AttrsInstance, t.Protocol):
     """
     Protocol for a config class.
     """
 
+    __group_prefix__: t.ClassVar[str]
+
     @classmethod
+    @abstractmethod
     def from_qsettings(cls) -> t.Self: ...
 
+    @abstractmethod
     def to_qsettings(self) -> None: ...
 
+    @abstractmethod
     def restore_defaults(self) -> None: ...
 
-    def create_editor(self, **kwargs: t.Any) -> QtWidgets.QWidget: ...
+    @abstractmethod
+    def create_editor(self, **kwargs: t.Any) -> QtWidgets.QScrollArea: ...
 
 
-config_registry: bidict[str, ConfigInstance] = bidict()
+def _get_fields(cls: type[attrs.AttrsInstance]) -> tuple["attrs.Attribute[t.Any]", ...]:
+    return attrs.fields(cls)
 
 
-def register(config_class: t.Type[ConfigInstance], name: str | None = None, overwrite: bool = False) -> None:
+_config_registry: bidict[str, ConfigInstance] = bidict()
+
+
+def _register(config_class: type[ConfigInstance], overwrite: bool = False) -> None:
     """
-    Adds an instance of the provided config class to the `config_registry` dictionary.
+    Adds an instance of the provided config class to the `_config_registry` dictionary.
 
-    If an instance of the passed config class already exists as a value in the `config_registry` dictionary, the
+    If an instance of the passed config class already exists as a value in the `_config_registry` dictionary, the
     existing instance is removed. A new instance of the provided config class is created via its `from_qsettings` method
-    and added to the `config_registry` dictionary with the provided name.
+    and added to the `_config_registry` dictionary with the provided name.
 
     Args:
-        config_class (Type[ConfigInstance]): The config class to add to the `config_registry` dictionary.
-        name (str | None, optional): The name under which the config class is registered. If None, the class name
-        will be used.
-        overwrite (bool, optional): Whether to overwrite an existing config class with the same name. Defaults to
-        False.
+        config_class (Type[ConfigInstance]): The config class to add to the `_config_registry` dictionary.
+        overwrite (bool, optional): Whether to overwrite an existing config class with the same name. Defaults to False.
     """
-    name = name or config_class.__name__
+    name = config_class.__group_prefix__
     config_instance = config_class.from_qsettings()
 
-    if name in config_registry and overwrite or name not in config_registry:
-        config_registry[name] = config_instance
+    if overwrite or name not in _config_registry:
+        _config_registry[name] = config_instance
     else:
-        logger.error(f"'{name}' already used for '{config_registry[name]}'.")
-        return
+        raise ValueError(f"A config class with name '{name}' already exists. To replace it, set `overwrite=True`.")
+
+    config_instance.to_qsettings()
 
 
 def get(name: str) -> ConfigInstance:
@@ -64,12 +71,12 @@ def get(name: str) -> ConfigInstance:
     Returns the config class registered under the provided name.
 
     Args:
-        name (str): The name of the config class.
+        name (str): The name under which the config class is registered.
 
     Returns:
-        Config: The config class registered under the provided name.
+        ConfigInstance: The config class registered under the provided name.
     """
-    return config_registry[name]
+    return _config_registry[name]
 
 
 def update_name(old_name: str, new_name: str) -> None:
@@ -80,94 +87,90 @@ def update_name(old_name: str, new_name: str) -> None:
         old_name (str): The old name of the config class.
         new_name (str): The new name of the config class.
     """
-    if old_name not in config_registry:
-        logger.error(f"No config class registered with name '{old_name}'")
-        return
-    config_registry[new_name] = config_registry.pop(old_name)
+    if old_name not in _config_registry:
+        raise ValueError(f"No config class registered with name '{old_name}'")
+
+    keys = list(_config_registry.keys())
+    values = list(_config_registry.values())
+    index = keys.index(old_name)
+    keys[index] = new_name
+    _config_registry.clear()
+    _config_registry.update(zip(keys, values, strict=True))
+    _config_registry[new_name].__class__.__group_prefix__ = new_name
+
+    _config_registry[new_name].to_qsettings()
+    QtCore.QSettings().remove(old_name)
 
 
 def save() -> None:
     """
     Saves the current values of all registered configuration classes to QSettings.
     """
-    for config_class in config_registry.values():
+    for config_class in _config_registry.values():
         config_class.to_qsettings()
 
 
-def reset(include: t.Iterable[str] | None = None) -> None:
+def reset(exclude: t.Iterable[str] | None = None) -> None:
     """
-    Resets the values of the configs registered under the provided names to their default values.
+    Resets the values of all registered configs to their default values, excluding the provided names.
 
     If no names are provided, all registered configs are reset to their default values.
 
     Args:
-        include (Iterable[str] | None, optional): An iterable of config names to reset or `None` to reset all
-        configs.
+        exclude (Iterable[str] | None, optional): An iterable of config names to exclude from resetting or `None` to reset all configs.
     """
-    if not include:
-        for config_class in config_registry.values():
+    if not exclude:
+        for config_class in _config_registry.values():
             config_class.restore_defaults()
     else:
-        for name in include:
-            if name not in config_registry:
-                logger.warning(f"No config class registered with name '{name}'")
-                continue
-            config_registry[name].restore_defaults()
+        for name, config_class in _config_registry.items():
+            if name not in exclude:
+                config_class.restore_defaults()
 
 
-def clean(include: t.Iterable[str] | None = None) -> None:
+def clean(exclude: t.Iterable[str] | None = None) -> None:
     """
     Cleans QSettings by removing all settings or only specific registered config groups.
 
-    If no `include` list is provided, all settings are cleared. Otherwise, only the settings related to the
-    specified config names are removed.
+    If no `exclude` list is provided, all settings are cleared. Otherwise, only the settings related to the
+    specified config names are kept.
 
     Args:
-        include (Iterable[str] | None, optional): A list of registered config names to clean from QSettings. If
-        None, all settings will be cleared.
+        exclude (Iterable[str] | None, optional): A list of registered config names to exclude from cleaning or `None` to clean all settings.
     """
     qsettings = QtCore.QSettings()
 
-    if not include:
+    if not exclude:
         qsettings.clear()
     else:
-        for name in include:
-            if name not in config_registry:
-                logger.warning(f"No config class registered with name '{name}'")
-                continue
-            if name in qsettings.childGroups():
+        for name in list(qsettings.childGroups()):
+            if name not in exclude:
                 qsettings.remove(name)
 
     qsettings.sync()
 
 
-def available() -> list[str]:
-    """
-    Get a list of all currently registered config names.
-
-    Returns:
-        list[str]: A list of all registered config names.
-    """
-    return list(config_registry.keys())
-
-
 def update_value(group: str, key: str, value: t.Any) -> None:
     """
-    Updates the value of the config class registered under the provided name.
+    Updates the value of a specific attribute in a registered config class.
 
     Args:
-        name (str): The name of the config class.
-        value (Any): The new value to set.
+        group (str): The name of the config class.
+        key (str): The name of the attribute to update.
+        value (t.Any): The new value for the attribute.
+
+    Raises:
+        ValueError: If the config class or attribute does not exist.
     """
-    if group not in config_registry:
-        logger.error(f"No config class registered with name '{group}'")
-        return
+    try:
+        config_class = _config_registry[group]
+    except KeyError as e:
+        raise ValueError(f"No config class registered with name '{group}'") from e
 
-    if hasattr(config_registry[group], key):
-        setattr(config_registry[group], key, value)
-    else:
-        logger.error(f"No attribute '{key}' in config class '{group}'")
+    if key not in attrs.fields(config_class.__class__):
+        raise ValueError(f"No attribute '{key}' in config class '{group}'")
 
+    setattr(config_class, key, value)
     save()
 
 
@@ -181,7 +184,7 @@ def create_snapshot() -> dict[str, t.Any]:
         dict[str, Any]: A dictionary where keys are the names of registered configuration groups and values are
         dictionaries representing the current state of each group's attributes.
     """
-    return {key: attrs.asdict(inst) for key, inst in config_registry.items()}
+    return {key: attrs.asdict(inst) for key, inst in _config_registry.items()}
 
 
 def restore_snapshot(snapshot: dict[str, t.Any]) -> None:
@@ -228,7 +231,7 @@ def create_editor(parent: QtWidgets.QWidget | None = None, include: t.Iterable[s
     btn_box.rejected.connect(dlg.reject)
 
     tab_widget = QtWidgets.QTabWidget()
-    for name, inst in config_registry.items():
+    for name, inst in _config_registry.items():
         if not include or name in include:
             tab = inst.create_editor()
             tab_widget.addTab(tab, name)
@@ -243,8 +246,7 @@ def create_editor(parent: QtWidgets.QWidget | None = None, include: t.Iterable[s
     return dlg
 
 
-@attrs.define
-class EditorWidgetInfo[W: QtWidgets.QWidget]:
+class EditorWidgetInfo[W: QtWidgets.QWidget](t.NamedTuple):
     label: str
     widget_factory: t.Callable[..., W]
     sig_value_changed: str
@@ -253,37 +255,39 @@ class EditorWidgetInfo[W: QtWidgets.QWidget]:
     widget_properties: "WidgetPropertiesBase[W] | None" = None
 
 
-def _get_setting_path(inst_or_cls: attrs.AttrsInstance | t.Type[attrs.AttrsInstance], attr: t.Any) -> str:
+def _get_setting_path(inst_or_cls: ConfigInstance | type[ConfigInstance], attr: "attrs.Attribute[t.Any]") -> str:
     """
-    Generates a setting path string based on the class or instance and the provided attribute.
+    Returns the QSettings path for the specified attribute.
+
+    The path is composed of the group prefix (specified via the `group_name` argument of the `@config_define` decorator)
+    and the name of the field being accessed. If no `group_name` is provided, the name of the class is used as the group
+    prefix.
 
     Args:
-        inst_or_cls (attrs.AttrsInstance | type[attrs.AttrsInstance]):
-            The instance or class of the attrs-based class.
-        attr (Any):
-            The attribute whose name will be used to generate the path.
+        inst_or_cls (ConfigInstance | type[ConfigInstance]): A `@config_define` decorated class or an instance of that
+        class.
+        attr (attrs.Attribute): The attribute to get the path for.
 
     Returns:
-        str: The generated setting path in the format `ClassName/attribute_name`.
+        str: The QSettings path for the specified attribute.
     """
-    class_name = inst_or_cls.__name__ if inspect.isclass(inst_or_cls) else inst_or_cls.__class__.__name__
-    return f"{class_name}/{attr.name}"
+    return f"{inst_or_cls.__group_prefix__}/{attr.name}"
 
 
-def update_qsettings[T](inst: attrs.AttrsInstance, attr: "attrs.Attribute[t.Any]", value: T) -> T:
+def update_qsettings[T](inst: ConfigInstance, attr: "attrs.Attribute[t.Any]", value: T) -> T:
     """
     Updates the QSettings with the specified attribute and value.
 
     Args:
-        inst (attrs.AttrsInstance):
-            The instance of the attrs-based class containing the attribute to update.
+        inst (ConfigInstance):
+            The instance of the ConfigInstance-based class containing the attribute to update.
         attr (attrs.Attribute):
             The attribute being updated.
         value (T):
             The value to set for the given attribute, can be any type supported by QSettings.
 
     Returns:
-        T: The value that was set in the settings.
+        T: The unmodified value.
     """
     path = _get_setting_path(inst, attr)
     settings = QtCore.QSettings()
@@ -301,7 +305,7 @@ def _get_field_default(field: "attrs.Attribute[t.Any]") -> t.Any | None:
 def _from_qsettings(cls: t.Type[ConfigInstance]) -> ConfigInstance:
     settings = QtCore.QSettings()
     init_values = {}
-    for field in attrs.fields(cls):
+    for field in _get_fields(cls):
         path = _get_setting_path(cls, field)
         default = _get_field_default(field)
         qtype: type | None = field.metadata.get(QTYPE_KEY, None)
@@ -315,7 +319,7 @@ def _from_qsettings(cls: t.Type[ConfigInstance]) -> ConfigInstance:
 
 def _to_qsettings(self: ConfigInstance) -> None:
     settings = QtCore.QSettings()
-    for field in attrs.fields(self.__class__):
+    for field in _get_fields(self.__class__):
         path = _get_setting_path(self, field)
         value = getattr(self, field.name)
         settings.setValue(path, value)
@@ -323,18 +327,18 @@ def _to_qsettings(self: ConfigInstance) -> None:
 
 
 def _restore_defaults(self: ConfigInstance) -> None:
-    for field in attrs.fields(self.__class__):
+    for field in _get_fields(self.__class__):
         default = _get_field_default(field)
         setattr(self, field.name, default)
 
 
-def _create_editor(self: ConfigInstance, **kwargs: t.Any) -> QtWidgets.QWidget:
+def _create_editor(self: ConfigInstance, **kwargs: t.Any) -> QtWidgets.QScrollArea:
     container_widget = QtWidgets.QWidget()
 
     layout = QtWidgets.QVBoxLayout(container_widget)
     layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
 
-    for field in attrs.fields(self.__class__):
+    for field in _get_fields(self.__class__):
         editor_info: "EditorWidgetInfo[QtWidgets.QWidget] | None" = field.metadata.get("editor", None)
         if not editor_info:
             continue
@@ -360,29 +364,29 @@ def _create_editor(self: ConfigInstance, **kwargs: t.Any) -> QtWidgets.QWidget:
         )
         layout.addWidget(card)
 
-    return container_widget
+    scroll_area = QtWidgets.QScrollArea()
+    scroll_area.setWidgetResizable(True)
+    scroll_area.setWidget(container_widget)
+    return scroll_area
 
 
-def config_define(target_cls: _C) -> _C:
-    """
-        Extension of the `attrs.define` decorator that adds methods for interacting with QSettings and registers the class
-        with the `config` module.
+@t.overload
+def config(target_cls: _C) -> _C: ...
+@t.overload
+def config(*, group_name: str | None = None, register: bool = True) -> t.Callable[[_C], _C]: ...
+def config(
+    target_cls: _C | None = None, *, group_name: str | None = None, register: bool = True
+) -> _C | t.Callable[[_C], _C]:
+    def wrap(cls: _C) -> _C:
+        cls.__group_prefix__ = group_name or cls.__name__
+        cls.from_qsettings = classmethod(_from_qsettings)
+        cls.to_qsettings = _to_qsettings
+        cls.restore_defaults = _restore_defaults
+        cls.create_editor = _create_editor
 
-        Usage:
-            @config_define
-            class MyConfig:
-                ...
+        attrs_class = attrs.define(cls, eq=False, on_setattr=update_qsettings)
+        if register:
+            _register(attrs_class)
+        return attrs_class
 
-    Currently only this exact usage is supported, since i haven't figured out how to deal with `target_cls` being None
-    (i.e. `@config_define()`)
-    """
-    attrs_class = attrs.define(target_cls, eq=False, on_setattr=update_qsettings)
-
-    attrs_class.from_qsettings = classmethod(_from_qsettings)
-    attrs_class.to_qsettings = _to_qsettings
-    attrs_class.restore_defaults = _restore_defaults
-    attrs_class.create_editor = _create_editor
-
-    register(attrs_class)
-
-    return attrs_class
+    return wrap if target_cls is None else wrap(target_cls)
