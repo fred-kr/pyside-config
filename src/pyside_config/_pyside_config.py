@@ -66,7 +66,7 @@ def _register(config_class: type[ConfigInstance], overwrite: bool = False) -> No
     config_instance.to_qsettings()
 
 
-def get(name: str) -> ConfigInstance:
+def get_config(name: str) -> ConfigInstance:
     """
     Returns the config class registered under the provided name.
 
@@ -79,7 +79,7 @@ def get(name: str) -> ConfigInstance:
     return _config_registry[name]
 
 
-def update_name(old_name: str, new_name: str) -> None:
+def rename_config(old_name: str, new_name: str) -> None:
     """
     Updates the name under which a config class is registered.
 
