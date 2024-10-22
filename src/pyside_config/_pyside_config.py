@@ -174,6 +174,7 @@ def update_value(group: str, key: str, value: t.Any) -> None:
 
     config_class.to_qsettings()
 
+
 def create_snapshot() -> dict[str, t.Any]:
     """
     Creates a snapshot of the current state of all registered configuration groups.
@@ -359,8 +360,15 @@ def _create_editor(self: ConfigInstance, **kwargs: t.Any) -> QtWidgets.QScrollAr
 
         description = field.metadata.get("description", None)
 
+        default_value = _get_field_default(field)
+
         card = SettingCard(
-            title=editor_info.label, editor_widget=editor_widget, description=description, icon=editor_info.icon
+            title=editor_info.label,
+            default_value=default_value,
+            set_value_name=editor_info.set_value_method,
+            editor_widget=editor_widget,
+            description=description,
+            icon=editor_info.icon,
         )
         layout.addWidget(card)
 
