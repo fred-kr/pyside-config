@@ -329,8 +329,12 @@ def _to_qsettings(self: ConfigInstance) -> None:
 
 def _restore_defaults(self: ConfigInstance) -> None:
     for field in _get_fields(self.__class__):
-        default = _get_field_default(field)
-        setattr(self, field.name, default)
+        _reset_field(self, field)
+
+
+def _reset_field(self: ConfigInstance, field: "attrs.Attribute[t.Any]") -> None:
+    default = _get_field_default(field)
+    setattr(self, field.name, default)
 
 
 def _create_editor(self: ConfigInstance, **kwargs: t.Any) -> QtWidgets.QScrollArea:
@@ -370,6 +374,7 @@ def _create_editor(self: ConfigInstance, **kwargs: t.Any) -> QtWidgets.QScrollAr
             description=description,
             icon=editor_info.icon,
         )
+        card.sig_reset_clicked.connect(lambda f=field: _reset_field(self, f))
         layout.addWidget(card)
 
     scroll_area = QtWidgets.QScrollArea()
