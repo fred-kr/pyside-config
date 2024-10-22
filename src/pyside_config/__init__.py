@@ -4,6 +4,7 @@ if not QtWidgets.QApplication.organizationName() or not QtWidgets.QApplication.a
     raise RuntimeError("App name and organization must be set before importing `pyside_config`.")
 
 from ._pyside_config import (
+    EditorWidgetInfo,
     clean,
     config,
     create_editor,
@@ -27,4 +28,5 @@ __all__ = [
     "save",
     "update_name",
     "update_value",
+    "EditorWidgetInfo",
 ]
