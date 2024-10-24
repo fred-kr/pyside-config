@@ -11,12 +11,12 @@ from ._pyside_config import (
     create_editor,
     create_snapshot,
     get_config,
-    rename_config,
     reset,
     restore_snapshot,
     save,
     update_value,
 )
+from .properties import SETTER_KEY
 
 __all__ = [
     "config",
@@ -27,8 +27,8 @@ __all__ = [
     "reset",
     "restore_snapshot",
     "save",
-    "rename_config",
     "update_value",
     "EditorWidgetInfo",
     "QTYPE_KEY",
+    "SETTER_KEY",
 ]

@@ -6,22 +6,6 @@ from PySide6 import QtWidgets
 SETTER_KEY = "__setter"
 
 
-# def _check_step_size(inst: "SpinBoxProperties | DoubleSpinBoxProperties", attr: t.Any, value: int | float) -> None:
-#     max_step = inst.maximum - inst.minimum
-#     if value <= 0 or value > max_step:
-#         raise ValueError(f"Step must be higher than 0 and less than {max_step}.")
-
-
-# def _check_upper_bound(inst: "SpinBoxProperties | DoubleSpinBoxProperties", attr: t.Any, value: int | float) -> None:
-#     if value <= inst.minimum:
-#         raise ValueError("Max must be greater than min.")
-
-
-# def _check_lower_bound(inst: "SpinBoxProperties | DoubleSpinBoxProperties", attr: t.Any, value: int | float) -> None:
-#     if value >= inst.maximum:
-#         raise ValueError("Min must be less than max.")
-
-
 @attrs.define
 class WidgetPropertiesBase[W: QtWidgets.QWidget]:
     """
@@ -60,41 +44,6 @@ class SpinBoxProperties[T: int | float | decimal.Decimal](WidgetPropertiesBase[Q
 @attrs.define
 class DecimalSpinBoxProperties[T: float | decimal.Decimal](SpinBoxProperties[T]):
     decimals: int = attrs.field(default=2, metadata={SETTER_KEY: "setDecimals"})
-
-
-# @attrs.define
-# class SpinBoxProperties(WidgetPropertiesBase[QtWidgets.QSpinBox]):
-#     minimum: int = attrs.field(
-#         default=0, converter=int, validator=_check_lower_bound, metadata={SETTER_KEY: "setMinimum"}
-#     )
-#     maximum: int = attrs.field(
-#         default=1_000_000, converter=int, validator=_check_upper_bound, metadata={SETTER_KEY: "setMaximum"}
-#     )
-#     singleStep: int = attrs.field(
-#         default=1, converter=int, validator=_check_step_size, metadata={SETTER_KEY: "setSingleStep"}
-#     )
-#     prefix: str | None = attrs.field(default=None, metadata={SETTER_KEY: "setPrefix"})
-#     suffix: str | None = attrs.field(default=None, metadata={SETTER_KEY: "setSuffix"})
-#     hasFrame: bool = attrs.field(default=False, metadata={SETTER_KEY: "setFrame"})
-
-
-# @attrs.define
-# class DoubleSpinBoxProperties(WidgetPropertiesBase[QtWidgets.QDoubleSpinBox]):
-#     minimum: float = attrs.field(
-#         default=0.0, converter=float, validator=_check_lower_bound, metadata={SETTER_KEY: "setMinimum"}
-#     )
-#     maximum: float = attrs.field(
-#         default=1e6, converter=float, validator=_check_upper_bound, metadata={SETTER_KEY: "setMaximum"}
-#     )
-#     singleStep: float = attrs.field(
-#         default=0.1, converter=float, validator=_check_step_size, metadata={SETTER_KEY: "setSingleStep"}
-#     )
-#     decimals: int = attrs.field(
-#         default=2, converter=int, validator=attrs.validators.ge(0), metadata={SETTER_KEY: "setDecimals"}
-#     )
-#     prefix: str | None = attrs.field(default=None, metadata={SETTER_KEY: "setPrefix"})
-#     suffix: str | None = attrs.field(default=None, metadata={SETTER_KEY: "setSuffix"})
-#     hasFrame: bool = attrs.field(default=False, metadata={SETTER_KEY: "setFrame"})
 
 
 @attrs.define

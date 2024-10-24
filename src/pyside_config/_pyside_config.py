@@ -37,6 +37,7 @@ class ConfigInstance(attrs.AttrsInstance, t.Protocol):
 
 
 def _get_fields(cls: type[attrs.AttrsInstance]) -> tuple["attrs.Attribute[t.Any]", ...]:
+    """Wrapper around `attrs.fields` with more specific return type."""
     return attrs.fields(cls)
 
 
@@ -77,29 +78,6 @@ def get_config(name: str) -> ConfigInstance:
         ConfigInstance: The config class registered under the provided name.
     """
     return _config_registry[name]
-
-
-def rename_config(old_name: str, new_name: str) -> None:
-    """
-    Updates the name under which a config class is registered.
-
-    Args:
-        old_name (str): The old name of the config class.
-        new_name (str): The new name of the config class.
-    """
-    if old_name not in _config_registry:
-        raise ValueError(f"No config class registered with name '{old_name}'")
-
-    keys = list(_config_registry.keys())
-    values = list(_config_registry.values())
-    index = keys.index(old_name)
-    keys[index] = new_name
-    _config_registry.clear()
-    _config_registry.update(zip(keys, values, strict=True))
-    _config_registry[new_name].__class__.__group_prefix__ = new_name
-
-    _config_registry[new_name].to_qsettings()
-    QtCore.QSettings().remove(old_name)
 
 
 def save() -> None:
@@ -205,17 +183,19 @@ def restore_snapshot(snapshot: dict[str, t.Any]) -> None:
             update_value(grp, key, value)
 
 
-def create_editor(parent: QtWidgets.QWidget | None = None, include: t.Iterable[str] | None = None) -> QtWidgets.QDialog:
+def create_editor(
+    parent: QtWidgets.QWidget | None = None, exclude: t.Iterable[str] | None = None, window_title: str = "Settings"
+) -> QtWidgets.QDialog:
     """
     Creates a QDialog with tabs for each registered config class.
 
-    If no `include` list is provided, all registered configs are created. Otherwise, only the configs related
+    If no `exclude` list is provided, all registered configs are created. Otherwise, only the configs not related
     to the specified config names are created.
 
     Args:
         parent (QtWidgets.QWidget | None, optional): The parent widget for the dialog. Defaults to None.
-        include (Iterable[str] | None, optional): An iterable of config names to create editors for or `None` to
-        create editors for all registered configs.
+        exclude (Iterable[str] | None, optional): An iterable of config names to exclude from the editor.
+        window_title (str, optional): The title of the dialog window. Defaults to "Settings".
 
     Returns:
         QtWidgets.QDialog: A QDialog with tabs for each registered config class.
@@ -223,7 +203,7 @@ def create_editor(parent: QtWidgets.QWidget | None = None, include: t.Iterable[s
     dlg = QtWidgets.QDialog(parent)
     dlg.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
     dlg.setModal(True)
-    dlg.setWindowTitle("Settings")
+    dlg.setWindowTitle(window_title)
 
     btn_box = QtWidgets.QDialogButtonBox(
         QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel
@@ -233,7 +213,7 @@ def create_editor(parent: QtWidgets.QWidget | None = None, include: t.Iterable[s
 
     tab_widget = QtWidgets.QTabWidget()
     for name, inst in _config_registry.items():
-        if not include or name in include:
+        if exclude is None or name not in exclude:
             tab = inst.create_editor()
             tab_widget.addTab(tab, name)
 
@@ -275,7 +255,7 @@ def _get_setting_path(inst_or_cls: ConfigInstance | type[ConfigInstance], attr: 
     return f"{inst_or_cls.__group_prefix__}/{attr.name}"
 
 
-def update_qsettings[T](inst: ConfigInstance, attr: "attrs.Attribute[t.Any]", value: T) -> T:
+def _update_qsettings(inst: ConfigInstance, attr: "attrs.Attribute[t.Any]", value: t.Any) -> t.Any:
     """
     Updates the QSettings with the specified attribute and value.
 
@@ -284,11 +264,11 @@ def update_qsettings[T](inst: ConfigInstance, attr: "attrs.Attribute[t.Any]", va
             The instance of the ConfigInstance-based class containing the attribute to update.
         attr (attrs.Attribute):
             The attribute being updated.
-        value (T):
+        value (Any):
             The value to set for the given attribute, can be any type supported by QSettings.
 
     Returns:
-        T: The unmodified value.
+        Any: The value that was set.
     """
     path = _get_setting_path(inst, attr)
     settings = QtCore.QSettings()
@@ -303,7 +283,7 @@ def _get_field_default(field: "attrs.Attribute[t.Any]") -> t.Any | None:
     return default.factory() if isinstance(default, Factory) else default  # type: ignore
 
 
-def _from_qsettings(cls: t.Type[ConfigInstance]) -> ConfigInstance:
+def _from_qsettings(cls: type[ConfigInstance]) -> ConfigInstance:
     settings = QtCore.QSettings()
     init_values = {}
     for field in _get_fields(cls):
@@ -397,9 +377,32 @@ def config(
         cls.restore_defaults = _restore_defaults
         cls.create_editor = _create_editor
 
-        attrs_class = attrs.define(cls, eq=False, on_setattr=update_qsettings)
+        attrs_class = attrs.define(cls, eq=False, on_setattr=_update_qsettings)
         if register:
             _register(attrs_class)
         return attrs_class
 
     return wrap if target_cls is None else wrap(target_cls)
+
+
+# def rename_config(old_name: str, new_name: str) -> None:
+#     """
+#     Updates the name under which a config class is registered.
+
+#     Args:
+#         old_name (str): The old name of the config class.
+#         new_name (str): The new name of the config class.
+#     """
+#     if old_name not in _config_registry:
+#         raise ValueError(f"No config class registered with name '{old_name}'")
+
+#     keys = list(_config_registry.keys())
+#     values = list(_config_registry.values())
+#     index = keys.index(old_name)
+#     keys[index] = new_name
+#     _config_registry.clear()
+#     _config_registry.update(zip(keys, values, strict=True))
+#     _config_registry[new_name].__class__.__group_prefix__ = new_name
+
+#     _config_registry[new_name].to_qsettings()
+#     QtCore.QSettings().remove(old_name)
