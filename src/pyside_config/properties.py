@@ -1,13 +1,13 @@
 import decimal
 
 import attrs
-from PySide6 import QtWidgets
+from PySide6 import QtWidgets, QtGui
 
 SETTER_KEY = "__setter"
 
 
 @attrs.define
-class WidgetPropertiesBase[W: QtWidgets.QWidget]:
+class WidgetPropertiesBase[W: QtWidgets.QWidget | QtGui.QAction]:
     """
     Base class for widget properties.
     """

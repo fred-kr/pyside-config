@@ -25,12 +25,6 @@
 			"**/output/**",
 			"**/.idea/**",
 		],
-		"ruff.format.args": [
-			"--config=${workspaceFolder}/pyproject.toml"
-		],
-		"ruff.lint.args": [
-			"--config=${workspaceFolder}/pyproject.toml"
-		],
 		"workbench.colorCustomizations": {
 			"activityBar.activeBackground": "#a0a6b5",
 			"activityBar.background": "#a0a6b5",
