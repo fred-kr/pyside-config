@@ -1,5 +1,6 @@
-import typing as t
 from abc import abstractmethod
+from collections.abc import Callable, Iterable
+from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, Protocol, Self, TypeVar, overload
 
 import attrs
 from attr._make import Factory
@@ -7,24 +8,24 @@ from bidict import bidict
 from PySide6 import QtCore, QtGui, QtWidgets
 from pyside_widgets import SettingCard
 
-if t.TYPE_CHECKING:
+if TYPE_CHECKING:
     from .properties import WidgetPropertiesBase
 
 QTYPE_KEY = "__qtype"  # This key's value should be a valid argument to the `type` argument of `QtCore.QSettings.value`
 
-_C = t.TypeVar("_C", bound=type)
+_C = TypeVar("_C", bound=type)
 
 
-class ConfigInstance(attrs.AttrsInstance, t.Protocol):
+class ConfigInstance(attrs.AttrsInstance, Protocol):
     """
     Protocol for a config class.
     """
 
-    __group_prefix__: t.ClassVar[str]
+    __group_prefix__: ClassVar[str]
 
     @classmethod
     @abstractmethod
-    def from_qsettings(cls) -> t.Self: ...
+    def from_qsettings(cls) -> Self: ...
 
     @abstractmethod
     def to_qsettings(self) -> None: ...
@@ -33,10 +34,10 @@ class ConfigInstance(attrs.AttrsInstance, t.Protocol):
     def restore_defaults(self) -> None: ...
 
     @abstractmethod
-    def create_editor(self, **kwargs: t.Any) -> QtWidgets.QScrollArea: ...
+    def create_editor(self, **kwargs: Any) -> QtWidgets.QScrollArea: ...
 
 
-def _get_fields(cls: type[attrs.AttrsInstance]) -> tuple["attrs.Attribute[t.Any]", ...]:
+def _get_fields(cls: type[attrs.AttrsInstance]) -> tuple["attrs.Attribute[Any]", ...]:
     """Wrapper around `attrs.fields` with more specific return type."""
     return attrs.fields(cls)
 
@@ -88,7 +89,7 @@ def save() -> None:
         config_class.to_qsettings()
 
 
-def reset(exclude: t.Iterable[str] | None = None) -> None:
+def reset(exclude: Iterable[str] | None = None) -> None:
     """
     Resets the values of all registered configs to their default values, excluding the provided names.
 
@@ -106,12 +107,12 @@ def reset(exclude: t.Iterable[str] | None = None) -> None:
                 config_class.restore_defaults()
 
 
-def clean(exclude: t.Iterable[str] | None = None) -> None:
+def clean(exclude: Iterable[str] | None = None) -> None:
     """
     Cleans QSettings by removing all settings or only specific registered config groups.
 
     If no `exclude` list is provided, all settings are cleared. Otherwise, only the settings related to the
-    specified config names are kept.
+    specified config names are kep
 
     Args:
         exclude (Iterable[str] | None, optional): A list of registered config names to exclude from cleaning or `None` to clean all settings.
@@ -128,17 +129,17 @@ def clean(exclude: t.Iterable[str] | None = None) -> None:
     qsettings.sync()
 
 
-def update_value(group: str, key: str, value: t.Any) -> None:
+def update_value(group: str, key: str, value: Any) -> None:
     """
     Updates the value of a specific attribute in a registered config class.
 
     Args:
         group (str): The name of the config class.
         key (str): The name of the attribute to update.
-        value (t.Any): The new value for the attribute.
+        value (Any): The new value for the attribute.
 
     Raises:
-        ValueError: If the config class or attribute does not exist.
+        ValueError: If the config class or attribute does not exis
     """
     try:
         config_class = get_config(group)
@@ -153,7 +154,7 @@ def update_value(group: str, key: str, value: t.Any) -> None:
     config_class.to_qsettings()
 
 
-def create_snapshot() -> dict[str, t.Any]:
+def create_snapshot() -> dict[str, Any]:
     """
     Creates a snapshot of the current state of all registered configuration groups.
 
@@ -166,13 +167,13 @@ def create_snapshot() -> dict[str, t.Any]:
     return {key: attrs.asdict(inst) for key, inst in _config_registry.items()}
 
 
-def restore_snapshot(snapshot: dict[str, t.Any]) -> None:
+def restore_snapshot(snapshot: dict[str, Any]) -> None:
     """
-    Restores the state of all registered configuration groups from a snapshot.
+    Restores the state of all registered configuration groups from a snapsho
 
     The snapshot should be a dictionary where keys are group names and values are dictionaries representing the
     state of the group's attributes. Each attribute in the snapshot is restored to its value in the provided
-    snapshot.
+    snapsho
 
     Args:
         snapshot (dict[str, Any]): A dictionary representing the snapshot of the configuration groups' state to
@@ -184,7 +185,7 @@ def restore_snapshot(snapshot: dict[str, t.Any]) -> None:
 
 
 def create_editor(
-    parent: QtWidgets.QWidget | None = None, exclude: t.Iterable[str] | None = None, window_title: str = "Settings"
+    parent: QtWidgets.QWidget | None = None, exclude: Iterable[str] | None = None, window_title: str = "Settings"
 ) -> QtWidgets.QDialog:
     """
     Creates a QDialog with tabs for each registered config class.
@@ -227,16 +228,16 @@ def create_editor(
     return dlg
 
 
-class EditorWidgetInfo[W: QtWidgets.QWidget](t.NamedTuple):
+class EditorWidgetInfo[W: QtWidgets.QWidget](NamedTuple):
     label: str
-    widget_factory: t.Callable[..., W]
+    widget_factory: Callable[..., W]
     sig_value_changed: str
     set_value_method: str
     icon: QtGui.QIcon | None = None
     widget_properties: "WidgetPropertiesBase[W] | None" = None
 
 
-def _get_setting_path(inst_or_cls: ConfigInstance | type[ConfigInstance], attr: "attrs.Attribute[t.Any]") -> str:
+def _get_setting_path(inst_or_cls: ConfigInstance | type[ConfigInstance], attr: "attrs.Attribute[Any]") -> str:
     """
     Returns the QSettings path for the specified attribute.
 
@@ -255,7 +256,7 @@ def _get_setting_path(inst_or_cls: ConfigInstance | type[ConfigInstance], attr: 
     return f"{inst_or_cls.__group_prefix__}/{attr.name}"
 
 
-def _update_qsettings(inst: ConfigInstance, attr: "attrs.Attribute[t.Any]", value: t.Any) -> t.Any:
+def _update_qsettings(inst: ConfigInstance, attr: "attrs.Attribute[Any]", value: Any) -> Any:
     """
     Updates the QSettings with the specified attribute and value.
 
@@ -268,7 +269,7 @@ def _update_qsettings(inst: ConfigInstance, attr: "attrs.Attribute[t.Any]", valu
             The value to set for the given attribute, can be any type supported by QSettings.
 
     Returns:
-        Any: The value that was set.
+        Any: The value that was se
     """
     path = _get_setting_path(inst, attr)
     settings = QtCore.QSettings()
@@ -278,7 +279,7 @@ def _update_qsettings(inst: ConfigInstance, attr: "attrs.Attribute[t.Any]", valu
     return value
 
 
-def _get_field_default(field: "attrs.Attribute[t.Any]") -> t.Any | None:
+def _get_field_default(field: "attrs.Attribute[Any]") -> Any | None:
     default = field.default
     return default.factory() if isinstance(default, Factory) else default  # type: ignore
 
@@ -312,12 +313,12 @@ def _restore_defaults(self: ConfigInstance) -> None:
         _reset_field(self, field)
 
 
-def _reset_field(self: ConfigInstance, field: "attrs.Attribute[t.Any]") -> None:
+def _reset_field(self: ConfigInstance, field: "attrs.Attribute[Any]") -> None:
     default = _get_field_default(field)
     setattr(self, field.name, default)
 
 
-def _create_editor(self: ConfigInstance, **kwargs: t.Any) -> QtWidgets.QScrollArea:
+def _create_editor(self: ConfigInstance, **kwargs: Any) -> QtWidgets.QScrollArea:
     container_widget = QtWidgets.QWidget()
 
     layout = QtWidgets.QVBoxLayout(container_widget)
@@ -363,13 +364,13 @@ def _create_editor(self: ConfigInstance, **kwargs: t.Any) -> QtWidgets.QScrollAr
     return scroll_area
 
 
-@t.overload
+@overload
 def config(target_cls: _C) -> _C: ...
-@t.overload
-def config(*, group_name: str | None = None, register: bool = True) -> t.Callable[[_C], _C]: ...
+@overload
+def config(*, group_name: str | None = None, register: bool = True) -> Callable[[_C], _C]: ...
 def config(
     target_cls: _C | None = None, *, group_name: str | None = None, register: bool = True
-) -> _C | t.Callable[[_C], _C]:
+) -> _C | Callable[[_C], _C]:
     def wrap(cls: _C) -> _C:
         cls.__group_prefix__ = group_name or cls.__name__
         cls.from_qsettings = classmethod(_from_qsettings)

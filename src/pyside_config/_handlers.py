@@ -1,21 +1,21 @@
 import decimal
 import enum
-import typing as t
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from operator import attrgetter, methodcaller
+from typing import TYPE_CHECKING, Any, Generic, NamedTuple, ParamSpec, TypedDict, TypeVar, Union, Unpack
 
 import attrs
 from PySide6 import QtCore, QtGui, QtWidgets
 from pyside_widgets import DecimalSpinBox, EnumComboBox
 
-if t.TYPE_CHECKING:
-    from .properties import WidgetPropertiesBase
+if TYPE_CHECKING:
+    from pyside_config.properties import WidgetPropertiesBase
 
 type WidgetOrAction = QtWidgets.QWidget | QtGui.QAction
 
-P = t.ParamSpec("P")
-T_Value = t.TypeVar("T_Value")
-T_Editor = t.TypeVar("T_Editor", bound=WidgetOrAction, covariant=True)
+P = ParamSpec("P")
+T_Value = TypeVar("T_Value")
+T_Editor = TypeVar("T_Editor", bound=WidgetOrAction, covariant=True)
 _ValueChanged = Callable[[T_Editor], QtCore.SignalInstance]
 _ValueGetter = Callable[[T_Editor], T_Value]
 _ValueSetter = Callable[[T_Editor, T_Value], None]
@@ -26,11 +26,11 @@ def _combo_box_updated(self: QtWidgets.QComboBox) -> QtCore.SignalInstance:
     return self.currentIndexChanged
 
 
-def _combo_box_getter(self: QtWidgets.QComboBox) -> t.Any:
+def _combo_box_getter(self: QtWidgets.QComboBox) -> Any:
     return self.currentData()
 
 
-def _combo_box_setter(self: QtWidgets.QComboBox, value: t.Any) -> None:
+def _combo_box_setter(self: QtWidgets.QComboBox, value: Any) -> None:
     self.setCurrentIndex(self.findData(value))
 
 
@@ -151,14 +151,14 @@ def _line_edit_setter(self: QtWidgets.QLineEdit, value: str) -> None:
     self.setText(value)
 
 
-class EditorHooks(t.NamedTuple):
+class EditorHooks(NamedTuple):
     """
     A data structure that holds references to key editor interactions.
 
     Attributes:
         value_changed (_ValueChanged): A callable that returns the signal instance which emits when the value in the editor changes.
-        value_getter (_ValueGetter): A callable that retrieves the current value from the editor widget.
-        value_setter (_ValueSetter): A callable that sets a new value to the editor widget.
+        value_getter (_ValueGetter): A callable that retrieves the current value from the editor widge
+        value_setter (_ValueSetter): A callable that sets a new value to the editor widge
     """
 
     value_changed: _ValueChanged[...]
@@ -173,13 +173,13 @@ class EditorHooks(t.NamedTuple):
         Args:
             value_changed (str): The attribute name for the signal indicating a value change.
                 Typically, this will be a PySide signal, such as `valueChanged`.
-            value_getter (str): The method name for retrieving the current value from the editor widget.
-                For example, `text()` for a line edit widget.
-            value_setter (str): The method name for setting a new value on the editor widget.
-                For example, `setText()` for a line edit widget.
+            value_getter (str): The method name for retrieving the current value from the editor widge
+                For example, `text()` for a line edit widge
+            value_setter (str): The method name for setting a new value on the editor widge
+                For example, `setText()` for a line edit widge
 
         Returns:
-            EditorHooks: An instance of `EditorHooks` that can be used to attach behaviors to the editor widget.
+            EditorHooks: An instance of `EditorHooks` that can be used to attach behaviors to the editor widge
 
         Example:
             ```python
@@ -213,7 +213,7 @@ def _to_editor_hooks(value: EditorHooks | tuple[str, str, str] | None) -> Editor
     return EditorHooks.from_names(*value)
 
 
-class EditorData(t.NamedTuple, t.Generic[P, T_Editor]):
+class EditorData(NamedTuple, Generic[P, T_Editor]):
     """
     Information required to create an editor widget for a config entry.
     """
@@ -225,9 +225,9 @@ class EditorData(t.NamedTuple, t.Generic[P, T_Editor]):
     properties: "WidgetPropertiesBase[T_Editor] | None" = None
     icon: QtGui.QIcon | None = None
 
-    # @t.overload
+    # @overload
     # def create_widget(self, parent: QtWidgets.QWidget | None = ...) -> T_Editor: ...
-    # @t.overload
+    # @overload
     # def create_widget(self, *args: P.args, **kwargs: P.kwargs) -> T_Editor: ...
     # def create_widget(self, *args, **kwargs) -> T_Editor:
     #     w = self.widget_factory(*args, **kwargs)
@@ -239,20 +239,20 @@ class EditorData(t.NamedTuple, t.Generic[P, T_Editor]):
 
 EDITOR_KEY = "editor_data"
 
-_EqOrderType = t.Union[bool, Callable[[t.Any], t.Any]]
-_ValidatorType = Callable[[t.Any, "attrs.Attribute[T_Value]", T_Value], t.Any]
-_ConverterType = Callable[[t.Any], t.Any]
-_ReprType = Callable[[t.Any], str]
-_ReprArgType = t.Union[bool, _ReprType]
-_ValidatorArgType = t.Union[_ValidatorType[T_Value], t.Sequence[_ValidatorType[T_Value]]]
+_EqOrderType = Union[bool, Callable[[Any], Any]]
+_ValidatorType = Callable[[Any, "attrs.Attribute[T_Value]", T_Value], Any]
+_ConverterType = Callable[[Any], Any]
+_ReprType = Callable[[Any], str]
+_ReprArgType = Union[bool, _ReprType]
+_ValidatorArgType = Union[_ValidatorType[T_Value], Sequence[_ValidatorType[T_Value]]]
 
 
-class FieldArgs(t.TypedDict, t.Generic[T_Value], total=False):
+class FieldArgs(TypedDict, Generic[T_Value], total=False):
     validator: _ValidatorArgType[T_Value] | None
     repr: _ReprArgType
     hash: bool | None
     init: bool
-    converter: _ConverterType | attrs.Converter[t.Any, T_Value] | None
+    converter: _ConverterType | attrs.Converter[Any, T_Value] | None
     factory: Callable[[], T_Value] | None
     kw_only: bool
     eq: _EqOrderType | None
@@ -263,7 +263,7 @@ def config_entry(
     *,
     default: T_Value = attrs.NOTHING,
     editor_data: EditorData[P, T_Editor] | None = None,
-    **kwargs: t.Unpack[FieldArgs[T_Value]],
+    **kwargs: Unpack[FieldArgs[T_Value]],
 ) -> T_Value:
     metadata = {EDITOR_KEY: editor_data}
     return attrs.field(default=default, metadata=metadata, **kwargs)

@@ -1,12 +1,12 @@
 [project]
 name = "pyside-config"
 version = "0.1.0"
-description = "Add your description here"
+description = "Attempt at a typed interface to PySide6's QtCore.QSettings"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 dependencies = [
-    "pyside6>=6.8.2",
-    "attrs>=24.3.0",
+    "pyside6>=6.9.0",
+    "attrs>=25.3.0",
     "loguru>=0.7.3",
     "bidict>=0.23.1",
     "pyside-widgets",
@@ -17,7 +17,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py313"
 show-fixes = true
 output-format = "concise"
 line-length = 120
@@ -35,7 +35,7 @@ addopts = [
 ]
 
 [tool.pyright]
-pythonVersion = "3.12"
+pythonVersion = "3.13"
 reportMissingTypeStubs = false
 reportUnknownMemberType = false
 reportUnknownLambdaType = false
@@ -46,5 +46,5 @@ pyside-widgets = { git = "https://github.com/fred-kr/pyside-widgets.git" }
 
 [dependency-groups]
 dev = [
-    "rich>=13.9.4",
+    "rich>=14.0.0",
 ]
