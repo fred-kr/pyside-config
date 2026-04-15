@@ -1,50 +1,23 @@
 [project]
 name = "pyside-config"
 version = "0.1.0"
-description = "Attempt at a typed interface to PySide6's QtCore.QSettings"
+description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+authors = [
+    { name = "devduck", email = "frederik.kraemer@dev-duck.dev" }
+]
+requires-python = ">=3.14"
 dependencies = [
-    "pyside6>=6.9.0",
-    "attrs>=25.3.0",
+    "pyside6>=6.11.0",
+    "attrs>=26.1.0",
     "loguru>=0.7.3",
     "bidict>=0.23.1",
     "pyside-widgets",
 ]
 
+[tool.uv.sources]
+pyside-widgets = { url = "https://github.com/fred-kr/pyside-widgets/releases/download/v0.1.0/pyside_widgets-0.1.0-py3-none-any.whl" }
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[tool.ruff]
-target-version = "py313"
-show-fixes = true
-output-format = "concise"
-line-length = 120
-
-[tool.ruff.lint.pydocstyle]
-convention = "numpy"
-
-[tool.ruff.lint]
-ignore = ["E501"]
-select = ["E", "F", "B"]
-
-[tool.pytest.ini_options]
-addopts = [
-    "--import-mode=importlib",
-]
-
-[tool.pyright]
-pythonVersion = "3.13"
-reportMissingTypeStubs = false
-reportUnknownMemberType = false
-reportUnknownLambdaType = false
-typeCheckingMode = "strict"
-
-[tool.uv.sources]
-pyside-widgets = { git = "https://github.com/fred-kr/pyside-widgets.git" }
-
-[dependency-groups]
-dev = [
-    "rich>=14.0.0",
-]
