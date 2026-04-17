@@ -428,32 +428,20 @@ requires-dist = [
     { name = "attrs", specifier = ">=26.1.0" },
     { name = "bidict", specifier = ">=0.23.1" },
     { name = "loguru", specifier = ">=0.7.3" },
-    { name = "pyside-widgets", url = "https://github.com/fred-kr/pyside-widgets/releases/download/v0.1.0/pyside_widgets-0.1.0-py3-none-any.whl" },
+    { name = "pyside-widgets", git = "https://github.com/fred-kr/pyside-widgets.git?branch=main" },
     { name = "pyside6", specifier = ">=6.11.0" },
 ]
 
 [[package]]
 name = "pyside-widgets"
-version = "0.1.0"
-source = { url = "https://github.com/fred-kr/pyside-widgets/releases/download/v0.1.0/pyside_widgets-0.1.0-py3-none-any.whl" }
+version = "0.3.0"
+source = { git = "https://github.com/fred-kr/pyside-widgets.git?branch=main#05b101e8712a6bc2c13b6433d8fc2d11f55d8783" }
 dependencies = [
     { name = "darkdetect" },
     { name = "numpy" },
     { name = "pyqtgraph" },
     { name = "pyside6" },
     { name = "qtconsole" },
-]
-wheels = [
-    { url = "https://github.com/fred-kr/pyside-widgets/releases/download/v0.1.0/pyside_widgets-0.1.0-py3-none-any.whl", hash = "sha256:27fb57684a2e5dd732643350009eb799041562649dd67465f628202cb1698439" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "darkdetect", specifier = ">=0.8.0" },
-    { name = "numpy", specifier = ">=2.4.4" },
-    { name = "pyqtgraph", specifier = ">=0.14.0" },
-    { name = "pyside6", specifier = ">=6.11.0" },
-    { name = "qtconsole", specifier = ">=5.7.2" },
 ]
 
 [[package]]
