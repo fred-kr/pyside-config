@@ -1,3 +1,11 @@
+"""
+Shortcuts that build an `EditorWidgetInfo` together with the widget's properties.
+
+Each helper takes the label, an optional widget factory and icon, and the Qt properties of that widget type as
+keyword arguments. The signal and method names default to the hooks registered for the widget class, so they
+only need to be given for widgets `pyside_config.hooks_for` does not know.
+"""
+
 import decimal
 from collections.abc import Callable
 from typing import TypedDict, Unpack
@@ -5,11 +13,12 @@ from typing import TypedDict, Unpack
 from PySide6 import QtGui, QtWidgets
 from pyside_widgets import DecimalSpinBox
 
-from pyside_config._pyside_config import EditorWidgetInfo
+from pyside_config._core import EditorWidgetInfo
 from pyside_config.properties import (
     CheckBoxProperties,
     ComboBoxProperties,
     DecimalSpinBoxProperties,
+    DoubleSpinBoxProperties,
     LineEditProperties,
     SpinBoxProperties,
 )
@@ -59,8 +68,9 @@ class ComboBoxKwargs(TypedDict, total=False):
 def make_line_edit_info(
     label: str,
     widget_factory: Callable[..., QtWidgets.QLineEdit] = QtWidgets.QLineEdit,
-    sig_value_changed: str = "textChanged",
-    set_value_method: str = "setText",
+    sig_value_changed: str | None = None,
+    set_value_method: str | None = None,
+    get_value_method: str | None = None,
     icon: QtGui.QIcon | None = None,
     **kwargs: Unpack[LineEditKwargs],
 ) -> EditorWidgetInfo[QtWidgets.QLineEdit]:
@@ -69,6 +79,7 @@ def make_line_edit_info(
         widget_factory=widget_factory,
         sig_value_changed=sig_value_changed,
         set_value_method=set_value_method,
+        get_value_method=get_value_method,
         icon=icon,
         widget_properties=LineEditProperties(**kwargs),
     )
@@ -77,8 +88,9 @@ def make_line_edit_info(
 def make_check_box_info(
     label: str,
     widget_factory: Callable[..., QtWidgets.QCheckBox] = QtWidgets.QCheckBox,
-    sig_value_changed: str = "toggled",
-    set_value_method: str = "setChecked",
+    sig_value_changed: str | None = None,
+    set_value_method: str | None = None,
+    get_value_method: str | None = None,
     icon: QtGui.QIcon | None = None,
     **kwargs: Unpack[CheckBoxKwargs],
 ) -> EditorWidgetInfo[QtWidgets.QCheckBox]:
@@ -87,6 +99,7 @@ def make_check_box_info(
         widget_factory=widget_factory,
         sig_value_changed=sig_value_changed,
         set_value_method=set_value_method,
+        get_value_method=get_value_method,
         icon=icon,
         widget_properties=CheckBoxProperties(**kwargs),
     )
@@ -95,8 +108,9 @@ def make_check_box_info(
 def make_spin_box_info(
     label: str,
     widget_factory: Callable[..., QtWidgets.QSpinBox] = QtWidgets.QSpinBox,
-    sig_value_changed: str = "valueChanged",
-    set_value_method: str = "setValue",
+    sig_value_changed: str | None = None,
+    set_value_method: str | None = None,
+    get_value_method: str | None = None,
     icon: QtGui.QIcon | None = None,
     **kwargs: Unpack[IntSpinBoxKwargs],
 ) -> EditorWidgetInfo[QtWidgets.QSpinBox]:
@@ -105,6 +119,7 @@ def make_spin_box_info(
         widget_factory=widget_factory,
         sig_value_changed=sig_value_changed,
         set_value_method=set_value_method,
+        get_value_method=get_value_method,
         icon=icon,
         widget_properties=SpinBoxProperties(**kwargs),
     )
@@ -113,8 +128,9 @@ def make_spin_box_info(
 def make_double_spin_box_info(
     label: str,
     widget_factory: Callable[..., QtWidgets.QDoubleSpinBox] = QtWidgets.QDoubleSpinBox,
-    sig_value_changed: str = "valueChanged",
-    set_value_method: str = "setValue",
+    sig_value_changed: str | None = None,
+    set_value_method: str | None = None,
+    get_value_method: str | None = None,
     icon: QtGui.QIcon | None = None,
     **kwargs: Unpack[DoubleSpinBoxKwargs],
 ) -> EditorWidgetInfo[QtWidgets.QDoubleSpinBox]:
@@ -123,16 +139,18 @@ def make_double_spin_box_info(
         widget_factory=widget_factory,
         sig_value_changed=sig_value_changed,
         set_value_method=set_value_method,
+        get_value_method=get_value_method,
         icon=icon,
-        widget_properties=DecimalSpinBoxProperties(**kwargs),
+        widget_properties=DoubleSpinBoxProperties(**kwargs),
     )
 
 
 def make_decimal_spin_box_info(
     label: str,
     widget_factory: Callable[..., DecimalSpinBox] = DecimalSpinBox,
-    sig_value_changed: str = "valueChanged",
-    set_value_method: str = "setValue",
+    sig_value_changed: str | None = None,
+    set_value_method: str | None = None,
+    get_value_method: str | None = None,
     icon: QtGui.QIcon | None = None,
     **kwargs: Unpack[DecimalSpinBoxKwargs],
 ) -> EditorWidgetInfo[DecimalSpinBox]:
@@ -141,6 +159,7 @@ def make_decimal_spin_box_info(
         widget_factory=widget_factory,
         sig_value_changed=sig_value_changed,
         set_value_method=set_value_method,
+        get_value_method=get_value_method,
         icon=icon,
         widget_properties=DecimalSpinBoxProperties(**kwargs),
     )
@@ -149,8 +168,9 @@ def make_decimal_spin_box_info(
 def make_combo_box_info(
     label: str,
     widget_factory: Callable[..., QtWidgets.QComboBox] = QtWidgets.QComboBox,
-    sig_value_changed: str = "currentIndexChanged",
-    set_value_method: str = "setCurrentIndex",
+    sig_value_changed: str | None = None,
+    set_value_method: str | None = None,
+    get_value_method: str | None = None,
     icon: QtGui.QIcon | None = None,
     **kwargs: Unpack[ComboBoxKwargs],
 ) -> EditorWidgetInfo[QtWidgets.QComboBox]:
@@ -159,6 +179,7 @@ def make_combo_box_info(
         widget_factory=widget_factory,
         sig_value_changed=sig_value_changed,
         set_value_method=set_value_method,
+        get_value_method=get_value_method,
         icon=icon,
         widget_properties=ComboBoxProperties(**kwargs),
     )
