@@ -16,7 +16,10 @@ import pytest
 from PySide6 import QtCore
 
 import pyside_config
-from pyside_config import _core
+
+
+def ini_store(path: Path) -> QtCore.QSettings:
+    return QtCore.QSettings(str(path), QtCore.QSettings.Format.IniFormat)
 
 
 @pytest.fixture
@@ -27,16 +30,28 @@ def ini_path(tmp_path: Path) -> Path:
 @pytest.fixture(autouse=True)
 def fresh_store(ini_path: Path) -> Iterator[QtCore.QSettings]:
     """An empty INI store and an empty registry for the duration of one test."""
-    pyside_config.configure(lambda: QtCore.QSettings(str(ini_path), QtCore.QSettings.Format.IniFormat))
-    _core._registry.clear()
-    _core._class_names.clear()
+    pyside_config.configure(lambda: ini_store(ini_path))
+    pyside_config.clear_registry()
     yield pyside_config.settings()
-    _core._registry.clear()
-    _core._class_names.clear()
+    pyside_config.clear_registry()
     pyside_config.configure(None)
 
 
-def reopen_store(ini_path: Path) -> QtCore.QSettings:
-    """Flushes the current store and returns a new `QSettings` reading the same file, as a fresh process would."""
-    pyside_config.settings().sync()
-    return QtCore.QSettings(str(ini_path), QtCore.QSettings.Format.IniFormat)
+@pytest.fixture
+def changes() -> Iterator[list[tuple[str, str, object]]]:
+    """Every `sig_value_changed` emission during the test, as `(group, name, value)`."""
+    received: list[tuple[str, str, object]] = []
+
+    def record(group: str, name: str, value: object) -> None:
+        received.append((group, name, value))
+
+    pyside_config.signals().sig_value_changed.connect(record)
+    yield received
+    pyside_config.signals().sig_value_changed.disconnect(record)
+
+
+def restart(ini_path: Path) -> None:
+    """Flushes the store, then drops it and the registry, as if the process had exited and started again."""
+    pyside_config.sync()
+    pyside_config.clear_registry()
+    pyside_config.configure(lambda: ini_store(ini_path))

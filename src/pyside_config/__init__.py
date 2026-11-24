@@ -1,65 +1,60 @@
 """
 Persistent application settings for PySide6, declared as `attrs` classes and stored in `QSettings`.
 
-Set the organization and application name (or call `configure`) before the first `@config` class is declared;
-see `README.md` for a complete example.
+Set the organization and application name (or call `configure`) before the first `get_config` call; see
+`README.md` for a complete example.
 """
 
 from pyside_config._core import (
-    DESCRIPTION_KEY,
-    EDITOR_KEY,
-    QTYPE_KEY,
-    ConfigInstance,
     ConfigSignals,
-    EditorWidgetInfo,
     FieldInfo,
+    GroupInfo,
     clean,
+    clear_registry,
+    clear_store,
     config,
     config_field,
-    create_snapshot,
     get_config,
+    group_info,
     groups,
     iter_fields,
+    reload,
     reset,
-    restore_snapshot,
+    restore_defaults,
     save,
     signals,
+    sync,
     unregister,
-    update_value,
 )
-from pyside_config._editor import create_editor
-from pyside_config._hooks import DEFAULT_HOOKS, EditorHooks, hooks_for, register_editor_hooks
-from pyside_config._settings import coerce, configure, settings
-from pyside_config.properties import SETTER_KEY
+from pyside_config._editor import GroupPage, SettingsDialog, create_editor
+from pyside_config._hooks import EditorHooks, register_editor_hooks
+from pyside_config._settings import configure, settings
 
 __all__ = [
-    "DEFAULT_HOOKS",
-    "DESCRIPTION_KEY",
-    "EDITOR_KEY",
-    "QTYPE_KEY",
-    "SETTER_KEY",
-    "ConfigInstance",
     "ConfigSignals",
     "EditorHooks",
-    "EditorWidgetInfo",
     "FieldInfo",
+    "GroupInfo",
+    "GroupPage",
+    "SettingsDialog",
     "clean",
-    "coerce",
+    "clear_registry",
+    "clear_store",
     "config",
     "config_field",
     "configure",
     "create_editor",
-    "create_snapshot",
     "get_config",
+    "group_info",
     "groups",
-    "hooks_for",
     "iter_fields",
     "register_editor_hooks",
+    "reload",
     "reset",
-    "restore_snapshot",
+    "restore_defaults",
     "save",
     "settings",
     "signals",
+    "sync",
     "unregister",
-    "update_value",
 ]

@@ -80,7 +80,7 @@ wheels = [
 
 [[package]]
 name = "pyside-config"
-version = "0.2.1"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "attrs" },
@@ -113,8 +113,8 @@ dev = [
 
 [[package]]
 name = "pyside-widgets"
-version = "0.4.0"
-source = { git = "https://github.com/fred-kr/pyside-widgets.git?branch=main#c78a88042da05c99a68af6b7643f9116bf7d0729" }
+version = "0.5.0"
+source = { git = "https://github.com/fred-kr/pyside-widgets.git?branch=main#565f87d4c56ae749331407e3e19eb160699d3c32" }
 dependencies = [
     { name = "pyside6" },
 ]

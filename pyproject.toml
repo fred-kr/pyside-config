@@ -1,6 +1,6 @@
 [project]
 name = "pyside-config"
-version = "0.2.1"
+version = "0.3.0"
 description = "Persistent application settings for PySide6: attrs classes stored in QSettings, with a generated settings dialog."
 readme = "README.md"
 authors = [

@@ -11,8 +11,10 @@ returns `bool` as `"true"`/`"false"`, and a one-element string list comes back a
 
 from __future__ import annotations
 
+import collections.abc
 import decimal
 import enum
+import math
 import pathlib
 import types
 import typing
@@ -86,9 +88,11 @@ def coerce(value: Any, type_: Any) -> Any:
     Converts `value`, as returned by `QSettings.value`, to `type_`.
 
     Supports `bool`, `int`, `float`, `str`, `bytes`, `decimal.Decimal`, `pathlib.Path`, `QByteArray`, `Enum`
-    subclasses (matched by value, then by name), `X | None`, `Literal`, `list[T]`, `tuple[T, ...]`, `set[T]`,
-    `dict[K, V]` and any class that accepts the value as its single constructor argument. `None`, `Any` and
-    unresolved annotations return `value` unchanged.
+    subclasses (matched by value, then by name), `X | None`, `Literal`, `list[T]`, `tuple[T, ...]`,
+    `tuple[A, B]` (one type per position), `set[T]`, `dict[K, V]` and any class that accepts the value as its
+    single constructor argument. `None` and `Any` as `type_` return `value` unchanged.
+
+    A number with a fractional part is not an `int`: `coerce("5.0", int)` is `5`, `coerce(2.7, int)` raises.
 
     Raises:
         ValueError, TypeError: `value` cannot be interpreted as `type_`.
@@ -122,9 +126,13 @@ def coerce(value: Any, type_: Any) -> Any:
                 continue
         raise ValueError(f"{value!r} is not one of {args}")
 
-    if origin in (list, tuple, set, frozenset, typing.Sequence, typing.MutableSequence):
+    if origin in (list, tuple, set, frozenset, collections.abc.Sequence, collections.abc.MutableSequence):
         items = _to_list(value)
-        item_type = args[0] if args and args[0] is not Ellipsis else None
+        if origin is tuple and args and Ellipsis not in args:
+            if len(items) != len(args):
+                raise ValueError(f"{value!r} does not have {len(args)} items")
+            return tuple(coerce(v, t) for v, t in zip(items, args, strict=True))
+        item_type = args[0] if args else None
         items = [coerce(v, item_type) for v in items]
         if origin is tuple:
             return tuple(items)
@@ -134,7 +142,7 @@ def coerce(value: Any, type_: Any) -> Any:
             return frozenset(items)
         return items
 
-    if origin in (dict, typing.Mapping, typing.MutableMapping):
+    if origin in (dict, collections.abc.Mapping, collections.abc.MutableMapping):
         if value is None:
             return {}
         if not isinstance(value, dict):
@@ -174,7 +182,10 @@ def coerce(value: Any, type_: Any) -> Any:
             try:
                 return int(text)
             except ValueError:
-                return int(float(text))
+                value = float(text)
+        if isinstance(value, (float, decimal.Decimal)):
+            if not math.isfinite(value) or value != int(value):
+                raise ValueError(f"{value!r} is not a whole number")
         return int(value)
 
     if type_ is float:
