@@ -72,7 +72,7 @@ DEFAULT_HOOKS: dict[type, EditorHooks] = {
     QtWidgets.QKeySequenceEdit: EditorHooks.from_names("keySequenceChanged", "keySequence", "setKeySequence"),
     QtWidgets.QDateTimeEdit: EditorHooks.from_names("dateTimeChanged", "dateTime", "setDateTime"),
     DecimalSpinBox: EditorHooks.from_names("valueChanged", "value", "setValue"),
-    EnumComboBox: EditorHooks.from_names("sig_current_enum_changed", "current_enum", "set_current_enum"),
+    EnumComboBox: EditorHooks.from_names("sig_current_enum_changed", "get_current_enum", "set_current_enum"),
 }
 
 
